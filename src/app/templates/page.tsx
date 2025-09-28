@@ -1,3 +1,8 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+
 export default function TemplatesPage() {
   const cards = [
     {
@@ -32,11 +37,58 @@ export default function TemplatesPage() {
     },
     {
       url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBeQNVqR1MnqFLkdGypLVRYK7D_zqlHKqavVYZ4hMiT7HRYgEsal3qYGur0pBjWZywrmwMEDRO9j0itJpJUGYH1dTl6m-gqcpmXLArXVuKQzECRceVWQRRk5XQu-8FzJOVyHN4pF7QoMKwcMod4SqndiT62MM5MwUcFuL5xAi5CzRg3iE2hFymLnXuFemW5n0OpGI43BEtSgFHnkO9gfM8zVW-Kf_nVxW6Q8gWZOc0yG1GjGw51dyXDGvnSSU8EP3bAfOR5iPgkAhYh",
+
     },
     {
       url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD72-7w5IxqSY3hi8YOLMzY7uBwdm7DsSEdmujRM5dDkF8lrvCWTyY0egccpRAEQQp0oi3u-2KzMv89Wjyqbp_wON6xQu-g5EGCpyL0FKjqIbeXz55zqiKB_ajvM7F7oMMSniC62qRxdWNBtIXaiZ752dg1xHGGCgk_TwGQoghg6yiaDfwKU1EkRuvfu7yHsznJIJgKFYAl8wQXCI3tzShNuowMkiDK0DMUHirnP-sxTmSkWkrx-l52WzBtfMasZmDl9OzFDpWvqqPf",
     },
   ];
+  const router = useRouter();
+  const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>([]);
+
+  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files || []);
+    const accepted = files.filter(f => /image\/(jpeg|jpg|png)/i.test(f.type) || /\.(jpe?g|png)$/i.test(f.name));
+    if (accepted.length === 0) return;
+    accepted.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = String(reader.result || "");
+        setUploads(prev => [...prev, { url, name: file.name }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  }, []);
+
+  const onFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const accepted = files.filter(f => /image\/(jpeg|jpg|png)/i.test(f.type) || /\.(jpe?g|png)$/i.test(f.name));
+    if (accepted.length === 0) return;
+    accepted.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = String(reader.result || "");
+        setUploads(prev => [...prev, { url, name: file.name }]);
+      };
+      reader.readAsDataURL(file);
+    });
+    // reset input so same file can be chosen again
+    e.currentTarget.value = "";
+  }, []);
+
+
+  function selectAndGo(url: string, name?: string) {
+    const params = new URLSearchParams();
+    params.set("img", url);
+    if (name) params.set("name", name);
+    router.push(`/my-designs?${params.toString()}`);
+  }
+
 
   return (
     <div className="flex h-screen w-full bg-gray-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -65,12 +117,14 @@ export default function TemplatesPage() {
             </li>
             <li>
               <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-blue-600/10 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-blue-600/20 dark:hover:text-blue-600" href="#">
+
                 <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"></path>
                 </svg>
                 <span className="text-sm font-medium">My Designs</span>
               </a>
             </li>
+
             <li>
               <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-blue-600/10 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-blue-600/20 dark:hover:text-blue-600" href="#">
                 <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
@@ -124,6 +178,24 @@ export default function TemplatesPage() {
             ))}
           </div>
 
+
+          {/* Drag & drop upload */}
+          <input id="template-upload" type="file" accept="image/png,image/jpeg" multiple className="hidden" onChange={onFileChange} />
+          <div
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            className="mb-8 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center dark:border-slate-700 dark:bg-slate-800/50"
+          >
+            <p className="text-sm text-slate-600 dark:text-slate-300">Drag & drop your image here (JPG, JPEG, PNG) or</p>
+            <button
+              type="button"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600/90"
+              onClick={() => (document.getElementById('template-upload') as HTMLInputElement | null)?.click()}
+            >
+              Browse files
+            </button>
+          </div>
+
           {/* Category header + filters */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Social Media</h2>
@@ -143,11 +215,36 @@ export default function TemplatesPage() {
               <div key={idx} className="group relative">
                 <div className="h-40 w-full rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(c.url)})` }} />
                 <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90">Select</button>
+                  <button type="button" onClick={() => selectAndGo(c.url, `Template ${idx + 1}`)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90">Select</button>
                 </div>
               </div>
             ))}
+
           </div>
+
+          {/* Your Uploads */}
+          {uploads.length > 0 && (
+            <div className="mt-12">
+              <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Your Uploads</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                {uploads.map((u, idx) => (
+                  <div key={`${u.name}-${idx}`} className="group relative">
+                    <div className="h-40 w-full rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(u.url)})` }} />
+                    <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => selectAndGo(u.url, u.name)}
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90"
+                      >
+                        Select
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
 
           {/* Pagination */}
           <div className="mt-10 flex items-center justify-center gap-2">

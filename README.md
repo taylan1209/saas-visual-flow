@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VisualFlow - Social Media Graphics SaaS
 
-## Getting Started
+VisualFlow is a web-based SaaS tool that allows companies to manage their social media graphics without needing a designer for every update. Designers create professional templates with editable fields and locked elements to maintain brand consistency.
 
-First, run the development server:
+## 🚀 Features
 
+- **Template Management**: Upload and manage professional social media templates
+- **Brand Consistency**: Lock design elements (colors, fonts, layout) while allowing text/image edits
+- **Multi-Platform Export**: Export graphics for Instagram, Facebook, TikTok, and more
+- **User Authentication**: Secure login/signup system
+- **Dashboard**: Intuitive interface for managing projects and templates
+- **Dark Mode Support**: Built-in dark/light theme switching
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS with custom design system
+- **Authentication**: Custom auth context (Firebase integration planned)
+- **Icons**: Lucide React
+- **Fonts**: Inter (Google Fonts)
+
+## 🎨 Design System
+
+The project uses a custom design system with:
+- Primary color: `#13a4ec` (Blue)
+- Light/Dark theme support
+- Custom color palette for backgrounds, text, and borders
+- Inter font family for consistent typography
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd saas-visual-flow
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Start the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Learn More
+## 🔐 Demo Credentials
 
-To learn more about Next.js, take a look at the following resources:
+For testing purposes, use these demo credentials:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Email**: `demo@visualflow.com`
+- **Password**: `demo123`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Alternative:
+- **Email**: `admin@visualflow.com`
+- **Password**: `admin123`
 
-## Deploy on Vercel
+## 📁 Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/
+│   ├── auth/           # Authentication pages
+│   ├── dashboard/      # Dashboard interface
+│   ├── globals.css     # Global styles
+│   ├── layout.tsx      # Root layout
+│   └── page.tsx        # Home page (redirects)
+├── contexts/
+│   └── AuthContext.tsx # Authentication context
+└── components/         # Reusable components (to be added)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔄 Authentication Flow
+
+1. User visits the home page (`/`)
+2. If not authenticated, redirected to `/auth`
+3. User can login or signup using demo credentials
+4. Upon successful authentication, redirected to `/dashboard`
+5. User data is stored in localStorage for persistence
+
+## 🎯 Roadmap
+
+- [ ] Firebase Authentication integration
+- [ ] Template upload and management system
+- [ ] Canvas-based template editor
+- [ ] Image upload and management
+- [ ] Export functionality (PNG, JPG, PDF)
+- [ ] User subscription management
+- [ ] Template marketplace
+- [ ] Collaboration features
+- [ ] Analytics dashboard
+
+## 🤝 Contributing
+
+This project is in active development. More screens and features will be added progressively.
+
+## 📄 License
+
+This project is private and proprietary.

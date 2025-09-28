@@ -43,14 +43,7 @@ export default function TemplatesPage() {
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
-          <div
-            className="h-10 w-10 rounded-full bg-cover bg-center"
-            style={{
-              backgroundImage:
-                'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDemPIgykCJOYVsfNV8wDOAFVnfchs28kavENWonMObHB4CkpNv_6JiF6anUSHyCSOL18zxE89Fo6db4zCggUlzAxx3siTBNVai0OL2sm3_ie3kMH2LmyYNqc61KioBbqUBDgZZSol-4Bip9Yx8KqAn-bOVYci9Ai_of3Bpp4C06iZ2BVUSTi7pRFp-rp3fIU4_obstZcKJkk_8mNZnoH6U0FX2hmORKZGytBjSda-t7dODek3SJkaOAFeKq3ceAOry8bPLqrlVSDEK")',
-            }}
-          />
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">DesignCo</h1>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Saas Design</h1>
         </div>
         <nav className="mt-8 flex flex-1 flex-col">
           <ul className="flex flex-col gap-2">

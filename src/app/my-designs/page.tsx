@@ -1,15 +1,103 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+
 export default function MyDesignsPage() {
+  const bgImage = "https://lh3.googleusercontent.com/aida-public/AB6AXuBndbq1uS3aC4pzCJhzgXH1RZ1ZX4LWC8wlGGQ2esOe7dLAZQC3lYJAB3xKv4VpW6iTrTYG4d8Mtzu4gu-YooH3m1C53Qsn3r7rFXrPnRrt8qYIwFpcDJNVPzpI370z_6_jYPpyPAdO_jAEfsRJre_48oyusATJNTCOQzbrVjMayHxtKiStDFotP5GtVJpwifDNSfAx6g0wUSfEDo4Z7VeVk7hkZ2FsweqRyctDJchbHcMS6KOjmU3pE5wcOX8UawMPaohSIJsPVbxT";
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [projectName, setProjectName] = useState("Saas Design Project");
+  const [showExport, setShowExport] = useState(false);
+  const [fileType, setFileType] = useState<"jpg" | "png">("jpg");
+  const [resolution, setResolution] = useState<"standard" | "high" | "maximum">("standard");
+  const [downloading, setDownloading] = useState(false);
+
+  function drawToCanvas(width = 960, height = 640) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const img = imgRef.current;
+    if (img && img.complete) {
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+    }
+  }
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = bgImage;
+    img.onload = () => {
+      imgRef.current = img;
+      drawToCanvas();
+    };
+    return () => {
+      imgRef.current = null;
+    };
+  }, []);
+
+  const previewDataUrl = useMemo(() => {
+    const c = canvasRef.current;
+    return c ? c.toDataURL("image/png") : "";
+  }, [showExport]);
+
+  function slugify(name: string) {
+    return name.trim().toLowerCase().replace(/[^a-z0-9-_]+/g, "_").replace(/^_|_$/g, "") || "design";
+  }
+
+  function handleSave() {
+    try {
+      const c = canvasRef.current;
+      if (!c) return;
+      const dataUrl = c.toDataURL("image/png");
+      const payload = { name: projectName, preview: dataUrl, updatedAt: Date.now() };
+      localStorage.setItem("currentDesign", JSON.stringify(payload));
+      alert("Design saved.");
+    } catch (_) {
+      alert("Save failed.");
+    }
+  }
+
+  async function handleExportDownload() {
+    try {
+      setDownloading(true);
+      const img = imgRef.current;
+      if (!img) throw new Error("image not ready");
+      const targetWidth = resolution === "maximum" ? 3000 : resolution === "high" ? 2000 : 1000;
+      const scale = targetWidth / img.width;
+      const width = Math.round(img.width * scale);
+      const height = Math.round(img.height * scale);
+      const tmp = document.createElement("canvas");
+      tmp.width = width;
+      tmp.height = height;
+      const ctx = tmp.getContext("2d");
+      if (!ctx) throw new Error("canvas ctx");
+      ctx.drawImage(img, 0, 0, width, height);
+      const mime = fileType === "png" ? "image/png" : "image/jpeg";
+      const dataUrl = tmp.toDataURL(mime, 0.92);
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `${slugify(projectName)}.${fileType}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error(e);
+      alert("Export failed.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
       {/* Header */}
       <header className="flex items-center justify-between border-b border-slate-200 px-6 py-3 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 text-blue-600">
-            <svg viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z"/><path d="M41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z"/>
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold">SocialSpark</h2>
+          <h2 className="text-xl font-bold">Saas Design</h2>
         </div>
         <div className="flex flex-1 justify-end gap-2">
           <button className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="Help">
@@ -89,22 +177,65 @@ export default function MyDesignsPage() {
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex h-10 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-600/90">
+              <input
+                className="h-10 w-48 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+                placeholder="Project name"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+              />
+              <button onClick={handleSave} className="flex h-10 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-600/90">
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V7l4-4h10l4 4v12a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v4h8"/></svg>
                 Save
               </button>
-              <a href="/export?img=https%3A%2F%2Flh3.googleusercontent.com%2Faida-public%2FAB6AXuBndbq1uS3aC4pzCJhzgXH1RZ1ZX4LWC8wlGGQ2esOe7dLAZQC3lYJAB3xKv4VpW6iTrTYG4d8Mtzu4gu-YooH3m1C53Qsn3r7rFXrPnRrt8qYIwFpcDJNVPzpI370z_6_jYPpyPAdO_jAEfsRJre_48oyusATJNTCOQzbrVjMayHxtKiStDFotP5GtVJpwifDNSfAx6g0wUSfEDo4Z7VeVk7hkZ2FsweqRyctDJchbHcMS6KOjmU3pE5wcOX8UawMPaohSIJsPVbxT" className="flex h-10 items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-900 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
+              <button onClick={() => setShowExport(true)} className="flex h-10 items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-900 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
                 Export
-              </a>
+              </button>
             </div>
           </div>
 
           <div className="flex w-full flex-grow items-center justify-center p-8">
             <div className="w-full max-w-5xl overflow-hidden rounded-xl shadow-lg">
-              <div className="h-[480px] w-full bg-cover bg-center" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBndbq1uS3aC4pzCJhzgXH1RZ1ZX4LWC8wlGGQ2esOe7dLAZQC3lYJAB3xKv4VpW6iTrTYG4d8Mtzu4gu-YooH3m1C53Qsn3r7rFXrPnRrt8qYIwFpcDJNVPzpI370z_6_jYPpyPAdO_jAEfsRJre_48oyusATJNTCOQzbrVjMayHxtKiStDFotP5GtVJpwifDNSfAx6g0wUSfEDo4Z7VeVk7hkZ2FsweqRyctDJchbHcMS6KOjmU3pE5wcOX8UawMPaohSIJsPVbxT")' }} />
+              <canvas ref={canvasRef} className="h-[480px] w-full" />
             </div>
           </div>
         </main>
+          {showExport && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowExport(false)} />
+              <div className="relative z-10 w-full max-w-xl rounded-xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Export</h3>
+                  <button onClick={() => setShowExport(false)} className="h-8 w-8 rounded hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
+                </div>
+                <div className="mb-4 grid grid-cols-3 gap-3">
+                  <label className="cursor-pointer text-center">
+                    <input className="peer sr-only" type="radio" name="filetype" checked={fileType === 'jpg'} onChange={() => setFileType('jpg')} />
+                    <div className="rounded-lg border border-slate-300 bg-white py-2 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-600/30 dark:border-slate-700 dark:bg-slate-900 dark:peer-checked:bg-blue-600/20">JPG</div>
+                  </label>
+                  <label className="cursor-pointer text-center">
+                    <input className="peer sr-only" type="radio" name="filetype" checked={fileType === 'png'} onChange={() => setFileType('png')} />
+                    <div className="rounded-lg border border-slate-300 bg-white py-2 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-600/30 dark:border-slate-700 dark:bg-slate-900 dark:peer-checked:bg-blue-600/20">PNG</div>
+                  </label>
+                </div>
+                <div className="mb-4 grid grid-cols-3 gap-3">
+                  {(['standard','high','maximum'] as const).map((opt) => (
+                    <label key={opt} className="cursor-pointer text-center">
+                      <input className="peer sr-only" type="radio" name="res" checked={resolution===opt} onChange={() => setResolution(opt)} />
+                      <div className="rounded-lg border border-slate-300 bg-white py-2 capitalize peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-600/30 dark:border-slate-700 dark:bg-slate-900 dark:peer-checked:bg-blue-600/20">{opt}</div>
+                    </label>
+                  ))}
+                </div>
+                <div className="mb-4 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="aspect-[4/3] w-full bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(previewDataUrl)})` }} />
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={handleExportDownload} disabled={downloading} className="flex-1 rounded-lg bg-slate-200 py-2 font-semibold hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700/60 dark:hover:bg-slate-600/60">{downloading? 'Preparing…':'Download'}</button>
+                  <button onClick={() => { navigator.clipboard.writeText(window.location.href); }} className="flex-1 rounded-lg bg-blue-600 py-2 font-semibold text-white hover:bg-blue-600/90">Share</button>
+                </div>
+              </div>
+            </div>
+          )}
+
       </div>
     </div>
   );

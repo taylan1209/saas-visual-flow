@@ -45,6 +45,10 @@ export default function TemplatesPage() {
   ];
   const router = useRouter();
   const [uploads, setUploads] = useState<Array<{ url: string; name: string }>>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const onDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); }, []);
+  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); }, []);
+
 
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -60,7 +64,7 @@ export default function TemplatesPage() {
       };
       reader.readAsDataURL(file);
     });
-  }, [setIsDragging]);
+  }, []);
 
   const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -81,9 +85,6 @@ export default function TemplatesPage() {
     // reset input so same file can be chosen again
     e.currentTarget.value = "";
   }, []);
-  const [isDragging, setIsDragging] = useState(false);
-  const onDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); }, []);
-  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); }, []);
 
 
 

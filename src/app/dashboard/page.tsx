@@ -91,7 +91,7 @@ export default function Dashboard() {
                 <div className="group" key={card.title}>
                   <div className="mb-3 w-full overflow-hidden rounded-lg">
                     <div
-                      className="aspect-square w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
+                      className="h-48 w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
                       style={{ backgroundImage: `url("${card.url}")` }}
                     />
                   </div>
@@ -112,7 +112,7 @@ export default function Dashboard() {
 
           <section className="mt-10">
             <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Usage Analytics</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid auto-rows-min grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Designs</p>
                 <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">125</p>

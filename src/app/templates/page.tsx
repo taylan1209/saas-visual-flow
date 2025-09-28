@@ -48,6 +48,7 @@ export default function TemplatesPage() {
 
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragging(false);
     const files = Array.from(e.dataTransfer.files || []);
     const accepted = files.filter(f => /image\/(jpeg|jpg|png)/i.test(f.type) || /\.(jpe?g|png)$/i.test(f.name));
     if (accepted.length === 0) return;
@@ -59,7 +60,7 @@ export default function TemplatesPage() {
       };
       reader.readAsDataURL(file);
     });
-  }, []);
+  }, [setIsDragging]);
 
   const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -80,6 +81,10 @@ export default function TemplatesPage() {
     // reset input so same file can be chosen again
     e.currentTarget.value = "";
   }, []);
+  const [isDragging, setIsDragging] = useState(false);
+  const onDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); }, []);
+  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); }, []);
+
 
 
   function selectAndGo(url: string, name?: string) {
@@ -156,6 +161,30 @@ export default function TemplatesPage() {
             <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">Browse our library of professionally designed templates to get started.</p>
           </div>
 
+          {/* Your Uploads (top-most) */}
+          {uploads.length > 0 && (
+            <div className="mb-8">
+              <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Your Uploads</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                {uploads.map((u, idx) => (
+                  <div key={`${u.name}-${idx}`} className="group relative">
+                    <div className="h-40 w-full rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(u.url)})` }} />
+                    <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => selectAndGo(u.url, u.name)}
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90"
+                      >
+                        Select
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+
           {/* Search */}
           <div className="mb-8 max-w-2xl mx-auto">
             <div className="relative">
@@ -184,7 +213,9 @@ export default function TemplatesPage() {
           <div
             onDrop={onDrop}
             onDragOver={onDragOver}
-            className="mb-8 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white/60 p-8 text-center dark:border-slate-700 dark:bg-slate-800/50"
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            className={`mb-8 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-all duration-200 ${isDragging ? "border-blue-600 ring-2 ring-blue-600 bg-blue-50 dark:bg-blue-900/20 scale-[1.01] animate-pulse" : "border-slate-300 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"}`}
           >
             <p className="text-sm text-slate-600 dark:text-slate-300">Drag & drop your image here (JPG, JPEG, PNG) or</p>
             <button
@@ -194,7 +225,9 @@ export default function TemplatesPage() {
             >
               Browse files
             </button>
+
           </div>
+
 
           {/* Category header + filters */}
           <div className="flex items-center justify-between mb-4">
@@ -222,28 +255,6 @@ export default function TemplatesPage() {
 
           </div>
 
-          {/* Your Uploads */}
-          {uploads.length > 0 && (
-            <div className="mt-12">
-              <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Your Uploads</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-                {uploads.map((u, idx) => (
-                  <div key={`${u.name}-${idx}`} className="group relative">
-                    <div className="h-40 w-full rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(u.url)})` }} />
-                    <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => selectAndGo(u.url, u.name)}
-                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90"
-                      >
-                        Select
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
 
           {/* Pagination */}

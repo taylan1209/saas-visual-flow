@@ -1,7 +1,30 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+:root {
+  --color-primary: #13a4ec;
+  --color-background-light: #f6f7f8;
+  --color-background-dark: #101c22;
+  --color-text-light: #111827;
+  --color-text-dark: #f3f4f6;
+  --color-subtle-light: #9ca3af;
+  --color-subtle-dark: #6b7280;
+  --color-border-light: #e5e7eb;
+  --color-border-dark: #374151;
+}
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-background-light: var(--color-background-light);
+  --color-background-dark: var(--color-background-dark);
+  --color-text-light: var(--color-text-light);
+  --color-text-dark: var(--color-text-dark);
+  --color-subtle-light: var(--color-subtle-light);
+  --color-subtle-dark: var(--color-subtle-dark);
+  --color-border-light: var(--color-border-light);
+  --color-border-dark: var(--color-border-dark);
+  --font-display: Inter, sans-serif;
+}
 
 .form-input::placeholder {
   color: #9ca3af;

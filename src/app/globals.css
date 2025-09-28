@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 .form-input::placeholder {
   color: #9ca3af;

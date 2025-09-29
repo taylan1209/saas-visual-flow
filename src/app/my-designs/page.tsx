@@ -22,6 +22,7 @@ type TextLayer = {
   shadowX: number;
   shadowY: number;
   shadowBlur: number;
+
   outlineEnabled: boolean;
   outlineColor: string;
   outlineWidth: number; // px
@@ -33,6 +34,14 @@ export default function MyDesignsPage() {
   const name = (search.get("name") || "design").replace(/[^a-z0-9-_]/gi, "_");
   const [bgColor, setBgColor] = useState<string>("#000000");
   const [bgImageOpacity, setBgImageOpacity] = useState<number>(1);
+
+
+  const [ratio, setRatio] = useState<"1:1" | "4:5" | "16:9" | "3:2">("3:2");
+  const [exportWidth, setExportWidth] = useState<number>(1500);
+  const ratioParts = useMemo(() => {
+    const [rw, rh] = ratio.split(":").map((n) => parseInt(n, 10) || 1);
+    return { rw, rh };
+  }, [ratio]);
 
   const [layers, setLayers] = useState<TextLayer[]>([
     {
@@ -124,8 +133,8 @@ export default function MyDesignsPage() {
 
   const handleExport = useCallback(async () => {
     // Basic export for all layers; Step 2 will add shadows/outline/advanced spacing
-    const W = 1500;
-    const H = 1000;
+    const W = exportWidth;
+    const H = Math.round((exportWidth * ratioParts.rh) / ratioParts.rw);
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
@@ -219,7 +228,7 @@ export default function MyDesignsPage() {
     a.href = data;
     a.download = `${name || "design"}.png`;
     a.click();
-  }, [bgColor, img, bgImageOpacity, layers, name]);
+  }, [bgColor, img, bgImageOpacity, layers, name, exportWidth, ratio]);
 
 
   return (
@@ -313,6 +322,18 @@ export default function MyDesignsPage() {
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V7l4-4h10l4 4v12a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v4h8"/></svg>
                 Save
               </button>
+              <div className="hidden items-center gap-2 md:flex">
+                <label className="text-sm text-slate-600 dark:text-slate-300">Ratio</label>
+                <select value={ratio} onChange={(e) => setRatio(e.target.value as any)} className="rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800">
+                  <option value="1:1">1:1</option>
+                  <option value="4:5">4:5</option>
+                  <option value="16:9">16:9</option>
+                  <option value="3:2">3:2</option>
+                </select>
+                <label className="text-sm text-slate-600 dark:text-slate-300">Width</label>
+                <input type="number" min={256} max={4096} step={64} value={exportWidth} onChange={(e) => setExportWidth(parseInt(e.target.value) || 1024)} className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800" />
+                <span className="text-sm text-slate-500">x {Math.round((exportWidth * ratioParts.rh) / ratioParts.rw)} px</span>
+              </div>
               <button onClick={handleExport} className="flex h-10 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-bold text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                 Export
@@ -325,8 +346,8 @@ export default function MyDesignsPage() {
               ref={stageRef}
               onPointerMove={onStagePointerMove}
               onPointerUp={onStagePointerUp}
-              className="relative aspect-[3/2] w-full overflow-hidden rounded-xl shadow-lg touch-none"
-              style={{ backgroundColor: bgColor }}
+              className="relative w-full overflow-hidden rounded-xl shadow-lg touch-none"
+              style={{ backgroundColor: bgColor, aspectRatio: `${ratioParts.rw} / ${ratioParts.rh}` }}
             >
               <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity }} />
               {layers.map((l) => (

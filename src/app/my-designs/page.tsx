@@ -68,6 +68,14 @@ export default function MyDesignsPage() {
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
   const [gridSpacing, setGridSpacing] = useState<number>(32);
+  // Overlay modes
+  const [overlayMode, setOverlayMode] = useState<'none'|'grid'|'thirds'|'safe'>('grid');
+
+  // Alignment guides
+  const [showGuides, setShowGuides] = useState<boolean>(true);
+  const [snapGuides, setSnapGuides] = useState<boolean>(true);
+  const [guideLines, setGuideLines] = useState<{ vx?: number; hy?: number } | null>(null);
+
 
   const [layers, setLayers] = useState<TextLayer[]>([
     {
@@ -100,6 +108,8 @@ export default function MyDesignsPage() {
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{ active: boolean; startX: number; startY: number; rectW: number; rectH: number; movingIds: string[]; initial: Record<string,{x:number,y:number}> }>({ active: false, startX: 0, startY: 0, rectW: 0, rectH: 0, movingIds: [], initial: {} });
+
+  const draggingIndex = useRef<number | null>(null);
 
   const onLayerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>, id: string) => {
     e.preventDefault();
@@ -152,6 +162,30 @@ export default function MyDesignsPage() {
       dyPct = Math.round(dyPct / stepPctY) * stepPctY;
     }
 
+    // alignment guides (stage edges and centers)
+    let vGuide: number | undefined;
+    let hGuide: number | undefined;
+    if (showGuides) {
+      const anchorId = dragState.current.movingIds[0];
+      if (anchorId) {
+        const init = dragState.current.initial[anchorId];
+        let candXPct = init.x + dxPct;
+        let candYPct = init.y + dyPct;
+        const candXPx = (candXPct / 100) * rectW;
+        const candYPx = (candYPct / 100) * rectH;
+        const near = 6; // px threshold
+        // vertical guides
+        if (Math.abs(candXPx - 0) <= near) { vGuide = 0; if (snapGuides) dxPct += (0 - candXPct); }
+        else if (Math.abs(candXPx - rectW / 2) <= near) { vGuide = 50; if (snapGuides) dxPct += (50 - candXPct); }
+        else if (Math.abs(candXPx - rectW) <= near) { vGuide = 100; if (snapGuides) dxPct += (100 - candXPct); }
+        // horizontal guides
+        if (Math.abs(candYPx - 0) <= near) { hGuide = 0; if (snapGuides) dyPct += (0 - candYPct); }
+        else if (Math.abs(candYPx - rectH / 2) <= near) { hGuide = 50; if (snapGuides) dyPct += (50 - candYPct); }
+        else if (Math.abs(candYPx - rectH) <= near) { hGuide = 100; if (snapGuides) dyPct += (100 - candYPct); }
+      }
+    }
+    setGuideLines((vGuide!==undefined || hGuide!==undefined) ? { vx: vGuide, hy: hGuide } : null);
+
     const movingIds = dragState.current.movingIds;
     const initial = dragState.current.initial;
 
@@ -161,11 +195,12 @@ export default function MyDesignsPage() {
       const ny = Math.max(0, Math.min(100, initial[l.id].y + dyPct));
       return { ...l, x: nx, y: ny };
     }));
-  }, [snapEnabled, gridSpacing]);
+  }, [snapEnabled, gridSpacing, showGuides, snapGuides]);
 
   const onStagePointerUp = useCallback(() => {
     dragState.current.active = false;
     dragState.current.movingIds = [];
+    setGuideLines(null);
   }, []);
 
   const addLayer = useCallback((kind: "heading" | "subheading" | "body") => {
@@ -340,7 +375,7 @@ export default function MyDesignsPage() {
               <h3 className="mb-2 px-2 text-lg font-bold text-slate-900 dark:text-white">Layers</h3>
               <div className="space-y-2">
                 {layers.map((l, idx) => (
-                  <div key={l.id} className={`flex items-center justify-between rounded-lg border px-2 py-1 text-sm ${selectedIds.has(l.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
+                  <div key={l.id} draggable onDragStart={() => { draggingIndex.current = idx; }} onDragOver={(e)=>e.preventDefault()} onDrop={() => { if (draggingIndex.current===null || draggingIndex.current===idx) return; setLayers(prev => { const a=[...prev]; const [item]=a.splice(draggingIndex.current!,1); a.splice(idx,0,item); return a; }); draggingIndex.current=null; }} className={`flex items-center justify-between rounded-lg border px-2 py-1 text-sm ${selectedIds.has(l.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
                     <button onClick={(e) => { const isToggle = e.shiftKey || e.metaKey || e.ctrlKey; setSelectedIds(prev => { const next = new Set(prev); if (isToggle) { if (next.has(l.id)) next.delete(l.id); else next.add(l.id); } else { next.clear(); next.add(l.id); } return next; }); }} className="flex min-w-0 flex-1 items-center gap-2 truncate text-left">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: l.color }} />
                       <span className="truncate">{l.text || 'Untitled'}</span>
@@ -430,14 +465,36 @@ export default function MyDesignsPage() {
                 </select>
                 <label className="text-sm text-slate-600 dark:text-slate-300">Width</label>
                 <input type="number" min={256} max={4096} step={64} value={exportWidth} onChange={(e) => setExportWidth(parseInt(e.target.value) || 1024)} className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800" />
+
+              {showGuides && guideLines?.vx !== undefined && (
+                <div className="pointer-events-none absolute inset-y-0" style={{ left: `${guideLines.vx}%` }}>
+                  <div className="absolute inset-y-0 w-[1px] bg-pink-500/80" />
+                </div>
+              )}
+              {showGuides && guideLines?.hy !== undefined && (
+                <div className="pointer-events-none absolute inset-x-0" style={{ top: `${guideLines.hy}%` }}>
+                  <div className="absolute inset-x-0 h-[1px] bg-pink-500/80" />
+                </div>
+              )}
+
                 <span className="text-sm text-slate-500">x {Math.round((exportWidth * ratioParts.rh) / ratioParts.rw)} px</span>
                 <div className="mx-2 h-6 w-px bg-slate-300 dark:bg-slate-700" />
-                <label className="text-sm text-slate-600 dark:text-slate-300">Grid</label>
-                <input type="checkbox" checked={showGrid} onChange={(e)=>setShowGrid(e.target.checked)} />
+                <label className="text-sm text-slate-600 dark:text-slate-300">Overlay</label>
+                <select value={overlayMode} onChange={(e)=>setOverlayMode(e.target.value as any)} className="rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800">
+                  <option value="none">None</option>
+                  <option value="grid">Grid</option>
+                  <option value="thirds">Rule of Thirds</option>
+                  <option value="safe">Safe Margins</option>
+                </select>
                 <label className="text-sm text-slate-600 dark:text-slate-300">Snap</label>
                 <input type="checkbox" checked={snapEnabled} onChange={(e)=>setSnapEnabled(e.target.checked)} />
                 <label className="text-sm text-slate-600 dark:text-slate-300">Spacing</label>
                 <input type="number" min={8} max={128} step={4} value={gridSpacing} onChange={(e)=>setGridSpacing(parseInt(e.target.value)||32)} className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800" />
+                <div className="mx-2 h-6 w-px bg-slate-300 dark:bg-slate-700" />
+                <label className="text-sm text-slate-600 dark:text-slate-300">Guides</label>
+                <input type="checkbox" checked={showGuides} onChange={(e)=>setShowGuides(e.target.checked)} />
+                <label className="text-sm text-slate-600 dark:text-slate-300">Snap guides</label>
+                <input type="checkbox" checked={snapGuides} onChange={(e)=>setSnapGuides(e.target.checked)} />
               </div>
               <button onClick={handleExport} className="flex h-10 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-bold text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
@@ -455,13 +512,37 @@ export default function MyDesignsPage() {
               style={{ backgroundColor: bgColor, aspectRatio: `${ratioParts.rw} / ${ratioParts.rh}` }}
             >
               <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity, filter: `brightness(${bgBrightness}%) contrast(${bgContrast}%) saturate(${bgSaturation}%) blur(${bgBlur}px)` }} />
-              {showGrid && (
+              {overlayMode === 'grid' && (
                 <div
                   className="pointer-events-none absolute inset-0"
                   style={{
                     backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing}px), repeating-linear-gradient(90deg, transparent, transparent ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing}px)`
                   }}
                 />
+              )}
+              {overlayMode === 'thirds' && (
+                <>
+                  <div className="pointer-events-none absolute inset-y-0 left-1/3 w-px bg-white/25" />
+                  <div className="pointer-events-none absolute inset-y-0 left-2/3 w-px bg-white/25" />
+                  <div className="pointer-events-none absolute inset-x-0 top-1/3 h-px bg-white/25" />
+                  <div className="pointer-events-none absolute inset-x-0 top-2/3 h-px bg-white/25" />
+                </>
+              )}
+              {overlayMode === 'safe' && (
+                <div className="pointer-events-none absolute inset-0">
+                  <div className="absolute inset-0 border-2 border-white/20" style={{ inset: '5%' }} />
+                </div>
+              )}
+
+              {showGuides && guideLines?.vx !== undefined && (
+                <div className="pointer-events-none absolute inset-y-0" style={{ left: `${guideLines.vx}%` }}>
+                  <div className="absolute inset-y-0 w-[1px] bg-pink-500/80" />
+                </div>
+              )}
+              {showGuides && guideLines?.hy !== undefined && (
+                <div className="pointer-events-none absolute inset-x-0" style={{ top: `${guideLines.hy}%` }}>
+                  <div className="absolute inset-x-0 h-[1px] bg-pink-500/80" />
+                </div>
               )}
 
               {layers.filter(l => l.visible !== false).map((l) => (

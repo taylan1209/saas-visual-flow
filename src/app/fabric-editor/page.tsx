@@ -1,11 +1,11 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 
 const FabricEditor = dynamic(() => import("@/components/FabricEditor"), { ssr: false });
 
-export default function FabricEditorPage() {
+function FabricEditorPageInner() {
   const search = useSearchParams();
   const img = search.get("img") || "https://images.unsplash.com/photo-1499084732479-de2c02d45fc4?w=1600&q=80&auto=format&fit=crop";
   const w = parseInt(search.get("w") || "1200", 10);
@@ -34,5 +34,13 @@ export default function FabricEditorPage() {
         İpucu: URL parametreleri ile boyutları ayarlayabilirsiniz. Örn: /fabric-editor?img=...&w=1500&h=1000
       </div>
     </div>
+  );
+}
+
+export default function FabricEditorPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-500">Loading editor...</div>}>
+      <FabricEditorPageInner />
+    </Suspense>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function ExportPage() {
+function ExportPageInner() {
   const search = useSearchParams();
   const imgParam = search.get("img") || "https://lh3.googleusercontent.com/aida-public/AB6AXuDJ0mCryla5IQF59QTpsXnJ8HQmPK2zDe3c-XpS2E7BTJAXxW8b81aHsBGeosTNR-T1AlvAFUrWNgVrIpU3hR_i-y2mqJo27iNwA0MBvLXrkvzf_4FhyC0IEbecVfgs_qW6pTnb9R692yS8xmueNWETN394Yw-1mRikdp6b_-cnz-pjFLdw3YBr7o0M-tOssIb2zcHLiQ_z1bXRR0OyWKCrEkMrSob3FfqZfkdgn4yGTLrd6TY7lm_gf3-AS3u1bFQZFLSTgbh_6Znb";
 
@@ -142,3 +142,11 @@ export default function ExportPage() {
   );
 }
 
+
+export default function ExportPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-slate-500">Loading...</div>}>
+      <ExportPageInner />
+    </Suspense>
+  );
+}

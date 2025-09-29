@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useCallback, useEffect } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 type TextLayer = {
@@ -37,7 +37,7 @@ type TextLayer = {
 // which allows us to make minimal changes while offering a rich Shapes experience.
 // Available glyphs are defined in addShape().
 
-export default function MyDesignsPage() {
+function MyDesignsPageInner() {
   const search = useSearchParams();
   const [img, setImg] = useState<string>(
     (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('img')) : null) ||
@@ -1047,3 +1047,11 @@ export default function MyDesignsPage() {
   );
 }
 
+
+export default function MyDesignsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-slate-500">Loading...</div>}>
+      <MyDesignsPageInner />
+    </Suspense>
+  );
+}

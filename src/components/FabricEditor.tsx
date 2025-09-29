@@ -60,6 +60,11 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
       fabricRef.current = fabric;
       if (disposed) return;
 
+      // Default scaling behavior: allow non-uniform scaling and extend from dragged edge
+      // Using any-cast to avoid potential TS type mismatches across fabric versions
+      (fabric as any).Object.prototype.centeredScaling = false;
+      (fabric as any).Object.prototype.lockUniScaling = false;
+
       const c = new fabric.Canvas(canvasRef.current!, {
         width,
         height,
@@ -71,7 +76,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
 
       // Load background image
       if (imageUrl) {
-        fabric.Image.fromURL(imageUrl, (img) => {
+        fabric.Image.fromURL(imageUrl, (img: any) => {
           if (!img) return;
           // Fit image into canvas while preserving aspect ratio
           const scale = Math.min(width / img.width!, height / img.height!);
@@ -95,7 +100,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
         const active = c.getActiveObjects();
         if (e.key === "Delete" || e.key === "Backspace") {
           if (active.length) {
-            active.forEach((o) => c.remove(o));
+            active.forEach((o: any) => c.remove(o));
             c.discardActiveObject();
             c.requestRenderAll();
             e.preventDefault();
@@ -104,7 +109,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "g") {
           if (active.length > 1) {
             const group = new fabric.Group(active);
-            active.forEach((o) => c.remove(o));
+            active.forEach((o: any) => c.remove(o));
             c.add(group);
             c.setActiveObject(group);
             c.requestRenderAll();
@@ -156,6 +161,8 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
       fontSize: 48,
       textAlign: "center",
       shadow: undefined,
+      centeredScaling: false,
+      lockUniScaling: false,
     });
     c.add(text);
     c.setActiveObject(text);
@@ -176,7 +183,8 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     const opts = shapeMode === 'fill'
       ? { fill: shapeFill || '#ffffff', stroke: undefined, strokeWidth: 0 }
       : { fill: 'transparent', stroke: shapeStroke || '#ffffff', strokeWidth: shapeStrokeWidth };
-    const r = new fabric.Rect({ ...base, ...opts });
+    const extras = { centeredScaling: false, lockUniScaling: false, strokeUniform: true } as const;
+    const r = new fabric.Rect({ ...base, ...opts, ...extras });
     c.add(r);
     c.setActiveObject(r);
     c.requestRenderAll();
@@ -193,7 +201,8 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     const opts = shapeMode === 'fill'
       ? { fill: shapeFill || '#ffffff', stroke: undefined, strokeWidth: 0 }
       : { fill: 'transparent', stroke: shapeStroke || '#ffffff', strokeWidth: shapeStrokeWidth };
-    const circ = new fabric.Circle({ ...base, ...opts });
+    const extras = { centeredScaling: false, lockUniScaling: false, strokeUniform: true } as const;
+    const circ = new fabric.Circle({ ...base, ...opts, ...extras });
     c.add(circ);
     c.setActiveObject(circ);
     c.requestRenderAll();
@@ -254,9 +263,9 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
   const addImageFromURL = (url: string) => {
     const fabric = fabricRef.current!;
     const c = fcanvasRef.current as any;
-    fabric.Image.fromURL(url, (img) => {
+    fabric.Image.fromURL(url, (img: any) => {
       if (!img) return;
-      img.set({ left: c.getWidth() / 2 - 100, top: c.getHeight() / 2 - 100, selectable: true, evented: true });
+      img.set({ left: c.getWidth() / 2 - 100, top: c.getHeight() / 2 - 100, selectable: true, evented: true, centeredScaling: false, lockUniScaling: false });
       const maxScale = Math.min(600 / (img.width || 1), 600 / (img.height || 1));
       if (isFinite(maxScale) && maxScale > 0) {
         img.scale(maxScale);
@@ -272,7 +281,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     const fabric = fabricRef.current!;
     const c = fcanvasRef.current as any;
     if (!fabric || !c) return;
-    fabric.Image.fromURL(url, (img) => {
+    fabric.Image.fromURL(url, (img: any) => {
       if (!img) return;
       // remove old bg if exists
       if (bgImageRef.current) {
@@ -372,15 +381,15 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
               <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
                 <label className="flex items-center gap-2">
                   <span className="w-20 text-slate-300">Dolgu</span>
-                  <input type="color" value={shapeFill} onChange={(e)=>setShapeFill(e.target.value)} className="h-7 w-14 bg-transparent" />
+                  <input type="color" value={shapeFill} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShapeFill(e.target.value)} className="h-7 w-14 bg-transparent" />
                 </label>
                 <label className="flex items-center gap-2">
                   <span className="w-20 text-slate-300">Kenar</span>
-                  <input type="color" value={shapeStroke} onChange={(e)=>setShapeStroke(e.target.value)} className="h-7 w-14 bg-transparent" />
+                  <input type="color" value={shapeStroke} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShapeStroke(e.target.value)} className="h-7 w-14 bg-transparent" />
                 </label>
                 <label className="flex items-center gap-2 col-span-2">
                   <span className="w-28 text-slate-300">Kenar Kalınlığı</span>
-                  <input type="range" min={0} max={20} step={1} value={shapeStrokeWidth} onChange={(e)=>setShapeStrokeWidth(parseInt(e.target.value,10))} className="flex-1" />
+                  <input type="range" min={0} max={20} step={1} value={shapeStrokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShapeStrokeWidth(parseInt(e.target.value,10))} className="flex-1" />
                   <span className="w-8 text-right text-slate-300">{shapeStrokeWidth}</span>
                 </label>
               </div>
@@ -400,7 +409,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                 <input
                   type="text"
                   value={imageURL}
-                  onChange={(e)=>setImageURL(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setImageURL(e.target.value)}
                   placeholder="https://..."
                   className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-500"
                 />
@@ -418,23 +427,23 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
           <div className="text-[11px] text-slate-400">Sürükle-bırak ile arka planı değiştirebilirsiniz. Not: Görselin içindeki yazılar resmin parçasıdır; doğrudan düzenlenemez. Yeni metin ekleyip üstüne yerleştirin veya şekillerle arka planı kapatın.</div>
           <div className="space-y-2">
             <label className="block text-xs text-slate-300">Parlaklık: {brightness.toFixed(2)}</label>
-            <input type="range" min={-1} max={1} step={0.01} value={brightness} onChange={(e)=>setBrightness(parseFloat(e.target.value))} />
+            <input type="range" min={-1} max={1} step={0.01} value={brightness} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBrightness(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-slate-300">Kontrast: {contrast.toFixed(2)}</label>
-            <input type="range" min={-1} max={1} step={0.01} value={contrast} onChange={(e)=>setContrast(parseFloat(e.target.value))} />
+            <input type="range" min={-1} max={1} step={0.01} value={contrast} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setContrast(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-slate-300">Doygunluk: {saturation.toFixed(2)}</label>
-            <input type="range" min={-1} max={1} step={0.01} value={saturation} onChange={(e)=>setSaturation(parseFloat(e.target.value))} />
+            <input type="range" min={-1} max={1} step={0.01} value={saturation} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setSaturation(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-slate-300">Bulanıklık: {blur.toFixed(2)}</label>
-            <input type="range" min={0} max={1} step={0.01} value={blur} onChange={(e)=>setBlur(parseFloat(e.target.value))} />
+            <input type="range" min={0} max={1} step={0.01} value={blur} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBlur(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-slate-300">Arka Plan Opaklık: {opacity.toFixed(2)}</label>
-            <input type="range" min={0} max={1} step={0.01} value={opacity} onChange={(e)=>setOpacity(parseFloat(e.target.value))} />
+            <input type="range" min={0} max={1} step={0.01} value={opacity} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setOpacity(parseFloat(e.target.value))} />
           </div>
           <p className="text-[11px] text-slate-400">İpucu: Seçili nesneleri Delete ile silebilirsiniz. ⌘/Ctrl+G ile gruplama, ⌘/Ctrl+F öne, ⌘/Ctrl+B arkaya gönderir.</p>
         </div>

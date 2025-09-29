@@ -26,6 +26,10 @@ type TextLayer = {
   outlineEnabled: boolean;
   outlineColor: string;
   outlineWidth: number; // px
+
+  // Layer controls
+  visible: boolean;
+  locked: boolean;
 };
 
 export default function MyDesignsPage() {
@@ -65,6 +69,8 @@ export default function MyDesignsPage() {
       outlineEnabled: false,
       outlineColor: "#000000",
       outlineWidth: 0,
+      visible: true,
+      locked: false,
     },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>("layer-1");
@@ -74,6 +80,8 @@ export default function MyDesignsPage() {
 
   const onLayerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>, id: string) => {
     e.preventDefault();
+    const layer = layers.find(l => l.id === id);
+    if (!layer || layer.locked === true) return; // ignore locked layers
     setSelectedId(id);
     const elRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     dragState.current.active = true;
@@ -81,7 +89,7 @@ export default function MyDesignsPage() {
     dragState.current.offsetX = e.clientX - elRect.left;
     dragState.current.offsetY = e.clientY - elRect.top;
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-  }, []);
+  }, [layers]);
 
   const onStagePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragState.current.active || !dragState.current.id) return;
@@ -125,6 +133,8 @@ export default function MyDesignsPage() {
       outlineEnabled: false,
       outlineColor: "#000000",
       outlineWidth: 0,
+      visible: true,
+      locked: false,
     };
     const id = `layer-${Date.now()}`;
     setLayers((prev) => [...prev, { id, ...base }]);
@@ -267,6 +277,35 @@ export default function MyDesignsPage() {
               ))}
             </div>
           </div>
+            <div className="border-t border-slate-200 p-4 dark:border-slate-800">
+              <h3 className="mb-2 px-2 text-lg font-bold text-slate-900 dark:text-white">Layers</h3>
+              <div className="space-y-2">
+                {layers.map((l, idx) => (
+                  <div key={l.id} className={`flex items-center justify-between rounded-lg border px-2 py-1 text-sm ${selectedId===l.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
+                    <button onClick={() => setSelectedId(l.id)} className="flex min-w-0 flex-1 items-center gap-2 truncate text-left">
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: l.color }} />
+                      <span className="truncate">{l.text || 'Untitled'}</span>
+                    </button>
+                    <div className="flex items-center gap-1">
+                      <button title="Toggle visibility" onClick={() => setLayers(prev=>prev.map(x=>x.id===l.id?{...x, visible: !(x.visible!==false)}:x))} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        {l.visible===false ? (
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 3 18 18"/><path d="M10.584 10.587A2 2 0 0 0 12 14a2 2 0 0 0 1.414-.586"/><path d="M9.88 5.094A10.45 10.45 0 0 1 12 5c7 0 10 7 10 7a17.5 17.5 0 0 1-3.24 4.34"/><path d="M6.16 6.156A17.5 17.5 0 0 0 2 12s3 7 10 7a10.5 10.5 0 0 0 5.5-1.5"/></svg>
+                        ) : (
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        )}
+                      </button>
+                      <button title="Toggle lock" onClick={() => setLayers(prev=>prev.map(x=>x.id===l.id?{...x, locked: !x.locked}:x))} className={`rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800 ${l.locked?'text-amber-600':''}`}>
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      </button>
+                      <button title="Move up" onClick={() => setLayers(prev=>{const i=prev.findIndex(x=>x.id===l.id); if(i<=0) return prev; const a=[...prev]; [a[i-1],a[i]]=[a[i],a[i-1]]; return a;})} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m18 15-6-6-6 6"/></svg></button>
+                      <button title="Move down" onClick={() => setLayers(prev=>{const i=prev.findIndex(x=>x.id===l.id); if(i<0||i>=prev.length-1) return prev; const a=[...prev]; [a[i],a[i+1]]=[a[i+1],a[i]]; return a;})} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg></button>
+                      <button title="Delete" onClick={() => { setLayers(prev=>prev.filter(x=>x.id!==l.id)); if(selectedId===l.id) setSelectedId(null); }} className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           <div className="flex-grow">
             <h3 className="px-6 text-lg font-bold text-slate-900 dark:text-white">Elements</h3>
             <div className="mt-2 border-b border-slate-200 px-4 dark:border-slate-800">
@@ -350,7 +389,7 @@ export default function MyDesignsPage() {
               style={{ backgroundColor: bgColor, aspectRatio: `${ratioParts.rw} / ${ratioParts.rh}` }}
             >
               <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity }} />
-              {layers.map((l) => (
+              {layers.filter(l => l.visible !== false).map((l) => (
                 <div
                   key={l.id}
                   onPointerDown={(e) => onLayerPointerDown(e, l.id)}

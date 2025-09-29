@@ -38,6 +38,10 @@ export default function MyDesignsPage() {
   const name = (search.get("name") || "design").replace(/[^a-z0-9-_]/gi, "_");
   const [bgColor, setBgColor] = useState<string>("#000000");
   const [bgImageOpacity, setBgImageOpacity] = useState<number>(1);
+  const [bgBrightness, setBgBrightness] = useState<number>(100);
+  const [bgContrast, setBgContrast] = useState<number>(100);
+  const [bgSaturation, setBgSaturation] = useState<number>(100);
+  const [bgBlur, setBgBlur] = useState<number>(0);
 
 
   const [ratio, setRatio] = useState<"1:1" | "4:5" | "16:9" | "3:2">("3:2");
@@ -178,7 +182,10 @@ export default function MyDesignsPage() {
           const dy = (H - dh) / 2;
           ctx.save();
           ctx.globalAlpha = bgImageOpacity;
+          // apply CSS-like filters for background
+          ctx.filter = `brightness(${bgBrightness}%) contrast(${bgContrast}%) saturate(${bgSaturation}%) blur(${bgBlur}px)`;
           ctx.drawImage(image, dx, dy, dw, dh);
+          ctx.filter = "none";
           ctx.restore();
         } catch {}
         resolve();
@@ -250,7 +257,7 @@ export default function MyDesignsPage() {
     a.href = data;
     a.download = `${name || "design"}.png`;
     a.click();
-  }, [bgColor, img, bgImageOpacity, layers, name, exportWidth, ratio]);
+  }, [bgColor, img, bgImageOpacity, layers, name, exportWidth, ratio, bgBrightness, bgContrast, bgSaturation, bgBlur]);
 
 
   return (
@@ -407,7 +414,7 @@ export default function MyDesignsPage() {
               className="relative w-full overflow-hidden rounded-xl shadow-lg touch-none"
               style={{ backgroundColor: bgColor, aspectRatio: `${ratioParts.rw} / ${ratioParts.rh}` }}
             >
-              <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity }} />
+              <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity, filter: `brightness(${bgBrightness}%) contrast(${bgContrast}%) saturate(${bgSaturation}%) blur(${bgBlur}px)` }} />
               {showGrid && (
                 <div
                   className="pointer-events-none absolute inset-0"
@@ -458,6 +465,24 @@ export default function MyDesignsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Image opacity</label>
                 <input type="range" min={0} max={1} step={0.05} value={bgImageOpacity} onChange={(e) => setBgImageOpacity(parseFloat(e.target.value))} className="w-full" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-sm font-medium mb-1">Brightness</label>
+                <input type="range" min={50} max={150} step={1} value={bgBrightness} onChange={(e)=>setBgBrightness(parseInt(e.target.value))} className="w-full" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Contrast</label>
+                <input type="range" min={50} max={150} step={1} value={bgContrast} onChange={(e)=>setBgContrast(parseInt(e.target.value))} className="w-full" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Saturation</label>
+                <input type="range" min={0} max={200} step={1} value={bgSaturation} onChange={(e)=>setBgSaturation(parseInt(e.target.value))} className="w-full" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Blur</label>
+                <input type="range" min={0} max={20} step={1} value={bgBlur} onChange={(e)=>setBgBlur(parseInt(e.target.value))} className="w-full" />
               </div>
             </div>
 

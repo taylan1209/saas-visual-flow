@@ -9,7 +9,7 @@ export default function SettingsPage() {
         <div className="hidden items-center gap-6 md:flex">
           <a className="text-sm font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-500" href="/dashboard">Dashboard</a>
           <a className="text-sm font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-500" href="/templates">Templates</a>
-          <a className="text-sm font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-500" href="/my-designs">My Designs</a>
+          <a className="text-sm font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-500" href="/fabric-editor">My Designs</a>
         </div>
         <div className="flex items-center gap-4">
           <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700/60" aria-label="Help">

@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "export": "next export",
+    "start": "next start",
+    "preview": "npx serve -s out -l 4173 || (npm i -g serve && serve -s out -l 4173)"
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.10",

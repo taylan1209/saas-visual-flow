@@ -13,10 +13,22 @@ export default function FabricEditorPage() {
 
   return (
     <div className="min-h-dvh p-4 md:p-6 space-y-4 text-slate-100">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-semibold">Fabric.js Editor (Beta)</h1>
-        <a className="text-sm text-blue-400 underline" href={`/app/my-designs?img=${encodeURIComponent(img)}`}>My Designs'e Dön</a>
+        <div className="flex items-center gap-3">
+          <a className="text-sm text-blue-400 underline" href={`/app/my-designs?img=${encodeURIComponent(img)}`}>My Designs'e Dön</a>
+          <a
+            className="text-sm px-3 py-1.5 rounded bg-emerald-600 text-white"
+            href="/demo/sample-poster.svg"
+            download
+          >Örnek görsel indir</a>
+        </div>
       </div>
+
+      <div className="text-xs text-slate-300/90">
+        Adımlar: 1) Yukarıdaki “Örnek görsel indir” butonuyla dosyayı masaüstüne indirin. 2) Bu sayfadaki canvas alanına sürükleyip bırakın. 3) Üstüne "Metin Ekle" diyerek yeni yazılar ekleyip düzenleyin.
+      </div>
+
       <FabricEditor imageUrl={img} width={w} height={h} />
       <div className="text-xs text-slate-400">
         İpucu: URL parametreleri ile boyutları ayarlayabilirsiniz. Örn: /fabric-editor?img=...&w=1500&h=1000

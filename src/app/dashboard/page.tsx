@@ -24,14 +24,6 @@ export default function Dashboard() {
               </a>
             </li>
             <li>
-              <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-blue-600/10 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-blue-600/20 dark:hover:text-blue-600" href="/my-designs">
-                <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"></path>
-                </svg>
-                <span className="text-sm font-medium">My Designs</span>
-              </a>
-            </li>
-            <li>
               <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-blue-600/10 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-blue-600/20 dark:hover:text-blue-600" href="#">
                 <svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M216,40H136V24a8,8,0,0,0-16,0V40H40A16,16,0,0,0,24,56V176a16,16,0,0,0,16,16H79.36L57.75,219a8,8,0,0,0,12.5,10l29.59-37h56.32l29.59,37a8,8,0,1,0,12.5-10l-21.61-27H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,136H40V56H216V176ZM104,120v24a8,8,0,0,1-16,0V120a8,8,0,0,1,16,0Zm32-16v40a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm32-16v56a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Z"></path>

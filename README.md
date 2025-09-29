@@ -107,3 +107,24 @@ This project is in active development. More screens and features will be added p
 ## 📄 License
 
 This project is private and proprietary.
+
+# saas-visual-flow
+
+This project contains a visual design tool built with Next.js and Tailwind CSS.
+
+New: Fabric.js Editor (Beta)
+- A new page is available at /fabric-editor that uses Fabric.js to edit images with layers.
+- Features: add/edit text (IText), shapes (rectangles, circles), move/resize/rotate, basic z-order controls, lock/unlock, background image filters (brightness, contrast, saturation, blur, opacity), overlay image upload, and export to PNG.
+
+How to use
+1. Install dependencies:
+   - npm install
+2. Run the dev server:
+   - npm run dev
+3. Open the Fabric editor:
+   - http://localhost:3000/fabric-editor?img=YOUR_IMAGE_URL&w=1200&h=800
+
+Notes
+- The editor dynamically imports fabric to avoid SSR issues.
+- Some remote images require CORS permission to be edited and exported in the canvas. If you see the canvas tainted error, host the image with proper CORS or upload it through the provided overlay import.
+- You can still use the existing My Designs page at /my-designs. The Fabric editor is separate and non-invasive.

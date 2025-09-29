@@ -7,6 +7,7 @@ export default function TemplatesPage() {
   const cards = [
     {
       url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBhjjpqrylXlIimWSvjsobc48plVkrwWeFc7dNkbhWGur03d3Jb8ZgLVPtrZb7L4YiaCRfIhaEywRFPTjMQsBE7TxZUPmvdgLYdKmFp3Qyw0YpIKF3nqTNYhqqT1Uq7hAVR5kGBCEku9JqrE6pRV0sWPJQO0StpXGkggY7QwxiXdMdkFCWEsCA_9dpUTBkBV7G_dA4lC9645XLEEq_BLYnEdcD_rNkmaBtduKb07WHaLvv_aIyrbAE3CGSEoF9pmBAiIp-jwuiKxI3-",
+      presetId: "football-match",
     },
     {
       url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD_l-oeCo9xJnIiEdJ5-wUuPEkllsDheiII_u0jjiG1RfEMrcgF0WfabcAGGymYeGhECo1YlhIyJhACo34s8J-74tMP68XfOZQTgvkKhQkjg0ILb9IhUAD_Eq8KO-hOk8TVLZfhYMb8rudtV0Rv5B-o67fP-uUrry59gr2IOzG3DvLHzd7sPaGaiYHmB7iKEqwxHjN343DGPx0xbcUUHxyoVzA-Td2p_2sfkfcUkkUTE0mxXo_QaUtd2rQKOP2HdWLFnngoIWMhSe5H",

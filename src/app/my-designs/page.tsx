@@ -32,6 +32,11 @@ type TextLayer = {
   locked: boolean;
 };
 
+// Simple shape model implemented as a specialized TextLayer behind the scenes.
+// We keep shapes as unicode glyphs so they reuse text styling and exporting logic,
+// which allows us to make minimal changes while offering a rich Shapes experience.
+// Available glyphs are defined in addShape().
+
 export default function MyDesignsPage() {
   const search = useSearchParams();
   const [img, setImg] = useState<string>(
@@ -75,6 +80,10 @@ export default function MyDesignsPage() {
   const [showGuides, setShowGuides] = useState<boolean>(true);
   const [snapGuides, setSnapGuides] = useState<boolean>(true);
   const [guideLines, setGuideLines] = useState<{ vx?: number; hy?: number } | null>(null);
+
+  // Elements panel tabs and inputs
+  const [elementsTab, setElementsTab] = useState<'text'|'images'|'shapes'>('text');
+  const [imageUrlInput, setImageUrlInput] = useState<string>('');
 
 
   const [layers, setLayers] = useState<TextLayer[]>([
@@ -230,6 +239,124 @@ export default function MyDesignsPage() {
     const id = `layer-${Date.now()}`;
     setLayers((prev) => [...prev, { id, ...base }]);
     setSelectedIds(new Set([id]));
+  }, []);
+
+  // Elegant text presets for quick typography
+  const addTextPreset = useCallback((preset: 'titleSerif'|'subtitleSans'|'accentScript') => {
+    const config = {
+      titleSerif: {
+        fontFamily: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif",
+        fontSize: 84,
+        bold: true,
+        italic: false,
+        letterSpacing: 0,
+        lineHeight: 1.1,
+      },
+      subtitleSans: {
+        fontFamily: "Inter, ui-sans-serif, system-ui",
+        fontSize: 40,
+        bold: false,
+        italic: false,
+        letterSpacing: 0.5,
+        lineHeight: 1.3,
+      },
+      accentScript: {
+        fontFamily: "'Brush Script MT', 'Segoe Script', cursive",
+        fontSize: 56,
+        bold: false,
+        italic: true,
+        letterSpacing: 0,
+        lineHeight: 1.2,
+      },
+    } as const;
+    const p = config[preset];
+    const id = `layer-${Date.now()}`;
+    const base: Omit<TextLayer, 'id'> = {
+      text: preset === 'titleSerif' ? 'Görsel Başlık' : preset === 'subtitleSans' ? 'Açıklama metni' : 'İmza / Accent',
+      x: 50,
+      y: preset === 'subtitleSans' ? 65 : 50,
+      fontSize: p.fontSize,
+      fontFamily: p.fontFamily,
+      color: '#ffffff',
+      bold: p.bold,
+      italic: p.italic,
+      align: 'center',
+      letterSpacing: p.letterSpacing as unknown as number,
+      lineHeight: p.lineHeight as unknown as number,
+      shadowEnabled: false,
+      shadowColor: '#000000',
+      shadowX: 0,
+      shadowY: 2,
+      shadowBlur: 6,
+      outlineEnabled: false,
+      outlineColor: '#000000',
+      outlineWidth: 0,
+      visible: true,
+      locked: false,
+    };
+    setLayers(prev => [...prev, { id, ...base }]);
+    setSelectedIds(new Set([id]));
+  }, []);
+
+  // Shapes implemented as unicode glyphs so they work with text styling and export
+  const addShape = useCallback((shape: 'square'|'circle'|'triangle'|'star'|'heart'|'diamond') => {
+    const glyphMap: Record<string, string> = {
+      square: '■',
+      circle: '●',
+      triangle: '▲',
+      star: '★',
+      heart: '❤',
+      diamond: '◆',
+    };
+    const id = `layer-${Date.now()}`;
+    const base: Omit<TextLayer, 'id'> = {
+      text: glyphMap[shape] || '■',
+      x: 50,
+      y: 55,
+      fontSize: 220,
+      fontFamily: 'Inter, ui-sans-serif, system-ui',
+      color: '#ffffff',
+      bold: false,
+      italic: false,
+      align: 'center',
+      letterSpacing: 0,
+      lineHeight: 1,
+      shadowEnabled: false,
+      shadowColor: '#000000',
+      shadowX: 0,
+      shadowY: 2,
+      shadowBlur: 6,
+      outlineEnabled: false,
+      outlineColor: '#000000',
+      outlineWidth: 0,
+      visible: true,
+      locked: false,
+    };
+    setLayers(prev => [...prev, { id, ...base }]);
+    setSelectedIds(new Set([id]));
+  }, []);
+
+  // Image helpers
+  const stockImages = useMemo(() => [
+    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200',
+    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200',
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200',
+    'https://images.unsplash.com/photo-1520975922215-230c439e63e1?q=80&w=1200',
+    'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1200'
+  ], []);
+
+  const setBackgroundFromUrl = useCallback(() => {
+    if (!imageUrlInput) return;
+    setImg(imageUrlInput);
+    setImageUrlInput('');
+  }, [imageUrlInput]);
+
+  const onFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setImg(url);
   }, []);
 
   const handleExport = useCallback(async () => {
@@ -404,28 +531,87 @@ export default function MyDesignsPage() {
             <h3 className="px-6 text-lg font-bold text-slate-900 dark:text-white">Elements</h3>
             <div className="mt-2 border-b border-slate-200 px-4 dark:border-slate-800">
               <div className="flex gap-4">
-                <a className="flex flex-col items-center justify-center border-b-2 border-blue-600 pb-2 pt-2 text-sm font-bold text-blue-600" href="#">Text</a>
-                <a className="flex flex-col items-center justify-center border-b-2 border-transparent pb-2 pt-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" href="#">Images</a>
-                <a className="flex flex-col items-center justify-center border-b-2 border-transparent pb-2 pt-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" href="#">Shapes</a>
+                <button onClick={()=>setElementsTab('text')} className={`flex flex-col items-center justify-center border-b-2 pb-2 pt-2 text-sm ${elementsTab==='text'?'border-blue-600 font-bold text-blue-600':'border-transparent font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}>Text</button>
+                <button onClick={()=>setElementsTab('images')} className={`flex flex-col items-center justify-center border-b-2 pb-2 pt-2 text-sm ${elementsTab==='images'?'border-blue-600 font-bold text-blue-600':'border-transparent font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}>Images</button>
+                <button onClick={()=>setElementsTab('shapes')} className={`flex flex-col items-center justify-center border-b-2 pb-2 pt-2 text-sm ${elementsTab==='shapes'?'border-blue-600 font-bold text-blue-600':'border-transparent font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}>Shapes</button>
               </div>
             </div>
             <div className="p-4">
-              <div className="relative">
-                <svg className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-3.5-3.5"/></svg>
-                <input className="w-full rounded-lg border border-slate-200 bg-gray-50 py-2 pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" placeholder="Search" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 px-4 pb-4">
-              <button onClick={() => addLayer("heading")} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
-                <svg className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/></svg>
-                <span className="font-bold">Heading</span>
-              </button>
-              <button onClick={() => addLayer("subheading")} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
-                <span className="font-bold">Subheading</span>
-              </button>
-              <button onClick={() => addLayer("body")} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
-                <span className="font-bold">Body</span>
-              </button>
+              {elementsTab === 'text' && (
+                <>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button onClick={()=>addLayer('heading')} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
+                      <div>
+                        <div className="text-base font-bold">Heading</div>
+                        <div className="text-xs text-slate-500">Büyük ve etkileyici başlık</div>
+                      </div>
+                      <div className="text-2xl font-bold">Aa</div>
+                    </button>
+                    <button onClick={()=>addLayer('subheading')} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
+                      <div>
+                        <div className="text-base font-bold">Subheading</div>
+                        <div className="text-xs text-slate-500">İkincil vurgu metni</div>
+                      </div>
+                      <div className="text-xl">Aa</div>
+                    </button>
+                    <button onClick={()=>addLayer('body')} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
+                      <div>
+                        <div className="text-base font-bold">Body</div>
+                        <div className="text-xs text-slate-500">Paragraf metni</div>
+                      </div>
+                      <div className="text-base">Aa</div>
+                    </button>
+                  </div>
+                  <div className="mt-3">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Şık hazır stiller</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button onClick={()=>addTextPreset('titleSerif')} className="rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-sm font-serif hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">Serif Başlık</button>
+                      <button onClick={()=>addTextPreset('subtitleSans')} className="rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-sm hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">Alt Başlık</button>
+                      <button onClick={()=>addTextPreset('accentScript')} className="rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-sm italic hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">Script Accent</button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {elementsTab === 'images' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">URL'den arka plan</label>
+                    <div className="flex gap-2">
+                      <input value={imageUrlInput} onChange={(e)=>setImageUrlInput(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" placeholder="https://..." />
+                      <button onClick={setBackgroundFromUrl} className="rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-600/90">Ayarla</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Bilgisayardan yükle</label>
+                    <input type="file" accept="image/*" onChange={onFileChange} className="w-full text-sm" />
+                  </div>
+                  <div>
+                    <div className="mb-1 text-sm font-medium">Stok görseller</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {stockImages.map(u=> (
+                        <button key={u} onClick={()=>setImg(u)} className="aspect-square w-full overflow-hidden rounded-lg border border-slate-200 hover:border-blue-600 dark:border-slate-700">
+                          <img src={u} alt="" className="h-full w-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {elementsTab === 'shapes' && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <button onClick={()=>addShape('square')} className="rounded-lg border border-slate-200 bg-white p-3 text-3xl hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">■</button>
+                    <button onClick={()=>addShape('circle')} className="rounded-lg border border-slate-200 bg-white p-3 text-3xl hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">●</button>
+                    <button onClick={()=>addShape('triangle')} className="rounded-lg border border-slate-200 bg-white p-3 text-3xl hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">▲</button>
+                    <button onClick={()=>addShape('star')} className="rounded-lg border border-slate-200 bg-white p-3 text-3xl hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">★</button>
+                    <button onClick={()=>addShape('heart')} className="rounded-lg border border-slate-200 bg-white p-3 text-3xl hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">❤</button>
+                    <button onClick={()=>addShape('diamond')} className="rounded-lg border border-slate-200 bg-white p-3 text-3xl hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">◆</button>
+                  </div>
+                  <div className="text-xs text-slate-500">Şekiller metin katmanları gibi çalışır; renk, boyut, hizalama ve efektleri sağ panelden düzenleyebilirsiniz.</div>
+                </div>
+              )}
             </div>
           </div>
         </aside>

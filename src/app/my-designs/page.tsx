@@ -118,6 +118,11 @@ export default function MyDesignsPage() {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{ active: boolean; startX: number; startY: number; rectW: number; rectH: number; movingIds: string[]; initial: Record<string,{x:number,y:number}> }>({ active: false, startX: 0, startY: 0, rectW: 0, rectH: 0, movingIds: [], initial: {} });
 
+  // Resize state & measurements
+  const resizeState = useRef<{ active: boolean; id: string | null; handle: 'n'|'s'|'e'|'w'|'ne'|'nw'|'se'|'sw'|null; startX: number; startY: number; startW: number; startH: number; startFont: number }>({ active: false, id: null, handle: null, startX: 0, startY: 0, startW: 0, startH: 0, startFont: 0 });
+  const layerRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [layerBoxes, setLayerBoxes] = useState<Record<string, { left: number; top: number; width: number; height: number }>>({});
+
   const draggingIndex = useRef<number | null>(null);
 
   const onLayerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>, id: string) => {
@@ -155,6 +160,23 @@ export default function MyDesignsPage() {
   }, [layers, selectedIds]);
 
   const onStagePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // Handle resizing first
+    if (resizeState.current.active && resizeState.current.id) {
+      const id = resizeState.current.id;
+      const box = layerBoxes[id];
+      if (!box) return;
+      const dx = e.clientX - resizeState.current.startX;
+      const dy = e.clientY - resizeState.current.startY;
+      const handle = resizeState.current.handle;
+      // Determine scale based on handle direction. Keep uniform scale from center.
+      const scaleX = (resizeState.current.startW + (handle === 'e' || handle === 'ne' || handle === 'se' ? dx : handle === 'w' || handle === 'nw' || handle === 'sw' ? -dx : 0)) / Math.max(1, resizeState.current.startW);
+      const scaleY = (resizeState.current.startH + (handle === 's' || handle === 'se' || handle === 'sw' ? dy : handle === 'n' || handle === 'ne' || handle === 'nw' ? -dy : 0)) / Math.max(1, resizeState.current.startH);
+      const scale = handle === 'e' || handle === 'w' ? scaleX : handle === 'n' || handle === 's' ? scaleY : Math.max(scaleX, scaleY);
+      const newFont = Math.max(4, Math.round(resizeState.current.startFont * scale));
+      setLayers(prev => prev.map(l => l.id === id ? { ...l, fontSize: newFont } : l));
+      return;
+    }
+
     if (!dragState.current.active) return;
     const rectW = dragState.current.rectW;
     const rectH = dragState.current.rectH;
@@ -204,11 +226,13 @@ export default function MyDesignsPage() {
       const ny = Math.max(0, Math.min(100, initial[l.id].y + dyPct));
       return { ...l, x: nx, y: ny };
     }));
-  }, [snapEnabled, gridSpacing, showGuides, snapGuides]);
+  }, [snapEnabled, gridSpacing, showGuides, snapGuides, layerBoxes]);
 
   const onStagePointerUp = useCallback(() => {
     dragState.current.active = false;
     dragState.current.movingIds = [];
+    resizeState.current.active = false;
+    resizeState.current.id = null;
     setGuideLines(null);
   }, []);
 
@@ -358,6 +382,27 @@ export default function MyDesignsPage() {
     const url = URL.createObjectURL(file);
     setImg(url);
   }, []);
+
+  // Measure bounding boxes of selected layers to place resize handles
+  useEffect(() => {
+    const update = () => {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const srect = stage.getBoundingClientRect();
+      const next: Record<string, { left: number; top: number; width: number; height: number }> = {};
+      selectedIds.forEach(id => {
+        const el = layerRefs.current[id];
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        next[id] = { left: r.left - srect.left, top: r.top - srect.top, width: r.width, height: r.height };
+      });
+      setLayerBoxes(next);
+    };
+    update();
+    window.addEventListener('resize', update);
+    const t = setTimeout(update, 0);
+    return () => { window.removeEventListener('resize', update); clearTimeout(t); };
+  }, [layers, selectedIds]);
 
   const handleExport = useCallback(async () => {
     // Basic export for all layers; Step 2 will add shadows/outline/advanced spacing
@@ -734,6 +779,7 @@ export default function MyDesignsPage() {
               {layers.filter(l => l.visible !== false).map((l) => (
                 <div
                   key={l.id}
+                  ref={(el) => { layerRefs.current[l.id] = el; }}
                   onPointerDown={(e) => onLayerPointerDown(e, l.id)}
                   onClick={(e)=>{ const isToggle = e.shiftKey || e.metaKey || e.ctrlKey; setSelectedIds(prev=>{ const next = new Set(prev); if (isToggle) { if (next.has(l.id)) next.delete(l.id); else next.add(l.id);} else { next.clear(); next.add(l.id);} return next; }); }}
                   className={`absolute select-none ${l.locked ? 'cursor-not-allowed opacity-80' : 'cursor-move'} ${selectedIds.has(l.id) ? 'outline outline-2 outline-blue-500/70' : ''}`}
@@ -756,6 +802,46 @@ export default function MyDesignsPage() {
                   {l.text}
                 </div>
               ))}
+
+              {/* Resize handles for selected layers */}
+              {Array.from(selectedIds).map(id => {
+                const box = layerBoxes[id];
+                const layer = layers.find(l=>l.id===id);
+                if (!box || !layer || layer.visible===false) return null;
+                const Handle = ({pos, cursor}:{pos:'n'|'s'|'e'|'w'|'ne'|'nw'|'se'|'sw', cursor:string}) => (
+                  <div
+                    onPointerDown={(e)=>{
+                      e.preventDefault(); e.stopPropagation();
+                      if (layer.locked) return;
+                      resizeState.current.active = true;
+                      resizeState.current.id = id;
+                      resizeState.current.handle = pos;
+                      resizeState.current.startX = e.clientX;
+                      resizeState.current.startY = e.clientY;
+                      resizeState.current.startW = box.width;
+                      resizeState.current.startH = box.height;
+                      resizeState.current.startFont = layer.fontSize;
+                      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                    }}
+                    className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-white shadow ring-1 ring-blue-600"
+                    style={{ cursor }}
+                  />
+                );
+                return (
+                  <div key={`box-${id}`} className="absolute pointer-events-none" style={{ left: box.left, top: box.top, width: box.width, height: box.height }}>
+                    {/* Corners */}
+                    <div className="absolute inset-0 border border-blue-500/70" />
+                    <div className="absolute -top-0 left-1/2 pointer-events-auto"><Handle pos="n" cursor="ns-resize" /></div>
+                    <div className="absolute top-full left-1/2 pointer-events-auto"><Handle pos="s" cursor="ns-resize" /></div>
+                    <div className="absolute top-1/2 -left-0 pointer-events-auto"><Handle pos="w" cursor="ew-resize" /></div>
+                    <div className="absolute top-1/2 left-full pointer-events-auto"><Handle pos="e" cursor="ew-resize" /></div>
+                    <div className="absolute -top-0 -left-0 pointer-events-auto"><Handle pos="nw" cursor="nwse-resize" /></div>
+                    <div className="absolute -top-0 left-full pointer-events-auto"><Handle pos="ne" cursor="nesw-resize" /></div>
+                    <div className="absolute top-full -left-0 pointer-events-auto"><Handle pos="sw" cursor="nesw-resize" /></div>
+                    <div className="absolute top-full left-full pointer-events-auto"><Handle pos="se" cursor="nwse-resize" /></div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </main>

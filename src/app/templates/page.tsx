@@ -90,7 +90,18 @@ export default function TemplatesPage() {
 
   function selectAndGo(url: string, name?: string) {
     const params = new URLSearchParams();
-    params.set("img", url);
+    try {
+      if (typeof window !== 'undefined' && url.startsWith('data:')) {
+        const key = `upload-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+        window.sessionStorage.setItem(key, url);
+        params.set('uploadKey', key);
+      } else {
+        params.set('img', url);
+      }
+    } catch {
+      // fallback to direct param if sessionStorage not available
+      params.set('img', url);
+    }
     if (name) params.set("name", name);
     router.push(`/my-designs?${params.toString()}`);
   }

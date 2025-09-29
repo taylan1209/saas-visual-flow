@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 type TextLayer = {
@@ -34,7 +34,20 @@ type TextLayer = {
 
 export default function MyDesignsPage() {
   const search = useSearchParams();
-  const img = search.get("img") || "https://lh3.googleusercontent.com/aida-public/AB6AXuBndbq1uS3aC4pzCJhzgXH1RZ1ZX4LWC8wlGGQ2esOe7dLAZQC3lYJAB3xKv4VpW6iTrTYG4d8Mtzu4gu-YooH3m1C53Qsn3r7rFXrPnRrt8qYIwFpcDJNVPzpI370z_6_jYPpyPAdO_jAEfsRJre_48oyusATJNTCOQzbrVjMayHxtKiStDFotP5GtVJpwifDNSfAx6g0wUSfEDo4Z7VeVk7hkZ2FsweqRyctDJchbHcMS6KOjmU3pE5wcOX8UawMPaohSIJsPVbxT";
+  const [img, setImg] = useState<string>(
+    (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('img')) : null) ||
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuBndbq1uS3aC4pzCJhzgXH1RZ1ZX4LWC8wlGGQ2esOe7dLAZQC3lYJAB3xKv4VpW6iTrTYG4d8Mtzu4gu-YooH3m1C53Qsn3r7rFXrPnRrt8qYIwFpcDJNVPzpI370z_6_jYPpyPAdO_jAEfsRJre_48oyusATJNTCOQzbrVjMayHxtKiStDFotP5GtVJpwifDNSfAx6g0wUSfEDo4Z7VeVk7hkZ2FsweqRyctDJchbHcMS6KOjmU3pE5wcOX8UawMPaohSIJsPVbxT"
+  );
+  useEffect(() => {
+    const uploadKey = search.get('uploadKey');
+    if (uploadKey && typeof window !== 'undefined') {
+      const val = window.sessionStorage.getItem(uploadKey);
+      if (val) setImg(val);
+    } else {
+      const direct = search.get('img');
+      if (direct) setImg(direct);
+    }
+  }, [search]);
   const name = (search.get("name") || "design").replace(/[^a-z0-9-_]/gi, "_");
   const [bgColor, setBgColor] = useState<string>("#000000");
   const [bgImageOpacity, setBgImageOpacity] = useState<number>(1);

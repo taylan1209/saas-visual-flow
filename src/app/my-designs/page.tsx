@@ -47,6 +47,11 @@ export default function MyDesignsPage() {
     return { rw, rh };
   }, [ratio]);
 
+  // Grid & Snap
+  const [showGrid, setShowGrid] = useState<boolean>(true);
+  const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
+  const [gridSpacing, setGridSpacing] = useState<number>(32);
+
   const [layers, setLayers] = useState<TextLayer[]>([
     {
       id: "layer-1",
@@ -102,10 +107,17 @@ export default function MyDesignsPage() {
     let y = e.clientY - rect.top - dragState.current.offsetY + layer.fontSize / 2;
     x = Math.max(0, Math.min(rect.width, x));
     y = Math.max(0, Math.min(rect.height, y));
+
+    if (snapEnabled) {
+      const step = gridSpacing;
+      x = Math.round(x / step) * step;
+      y = Math.round(y / step) * step;
+    }
+
     const nx = (x / rect.width) * 100;
     const ny = (y / rect.height) * 100;
     setLayers((prev) => prev.map((l) => (l.id === layer.id ? { ...l, x: nx, y: ny } : l)));
-  }, [layers]);
+  }, [layers, snapEnabled, gridSpacing]);
 
   const onStagePointerUp = useCallback(() => {
     dragState.current.active = false;
@@ -361,7 +373,7 @@ export default function MyDesignsPage() {
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V7l4-4h10l4 4v12a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v4h8"/></svg>
                 Save
               </button>
-              <div className="hidden items-center gap-2 md:flex">
+              <div className="hidden items-center gap-3 md:flex">
                 <label className="text-sm text-slate-600 dark:text-slate-300">Ratio</label>
                 <select value={ratio} onChange={(e) => setRatio(e.target.value as any)} className="rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800">
                   <option value="1:1">1:1</option>
@@ -372,6 +384,13 @@ export default function MyDesignsPage() {
                 <label className="text-sm text-slate-600 dark:text-slate-300">Width</label>
                 <input type="number" min={256} max={4096} step={64} value={exportWidth} onChange={(e) => setExportWidth(parseInt(e.target.value) || 1024)} className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800" />
                 <span className="text-sm text-slate-500">x {Math.round((exportWidth * ratioParts.rh) / ratioParts.rw)} px</span>
+                <div className="mx-2 h-6 w-px bg-slate-300 dark:bg-slate-700" />
+                <label className="text-sm text-slate-600 dark:text-slate-300">Grid</label>
+                <input type="checkbox" checked={showGrid} onChange={(e)=>setShowGrid(e.target.checked)} />
+                <label className="text-sm text-slate-600 dark:text-slate-300">Snap</label>
+                <input type="checkbox" checked={snapEnabled} onChange={(e)=>setSnapEnabled(e.target.checked)} />
+                <label className="text-sm text-slate-600 dark:text-slate-300">Spacing</label>
+                <input type="number" min={8} max={128} step={4} value={gridSpacing} onChange={(e)=>setGridSpacing(parseInt(e.target.value)||32)} className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800" />
               </div>
               <button onClick={handleExport} className="flex h-10 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-bold text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
@@ -389,12 +408,21 @@ export default function MyDesignsPage() {
               style={{ backgroundColor: bgColor, aspectRatio: `${ratioParts.rw} / ${ratioParts.rh}` }}
             >
               <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity }} />
+              {showGrid && (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing}px), repeating-linear-gradient(90deg, transparent, transparent ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing - 1}px, rgba(255,255,255,0.08) ${gridSpacing}px)`
+                  }}
+                />
+              )}
+
               {layers.filter(l => l.visible !== false).map((l) => (
                 <div
                   key={l.id}
                   onPointerDown={(e) => onLayerPointerDown(e, l.id)}
                   onClick={() => setSelectedId(l.id)}
-                  className={`absolute cursor-move select-none ${selectedId === l.id ? 'outline outline-2 outline-blue-500/70' : ''}`}
+                  className={`absolute select-none ${l.locked ? 'cursor-not-allowed opacity-80' : 'cursor-move'} ${selectedId === l.id ? 'outline outline-2 outline-blue-500/70' : ''}`}
                   style={{
                     left: `${l.x}%`,
                     top: `${l.y}%`,

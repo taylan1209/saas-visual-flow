@@ -162,28 +162,6 @@ export default function TemplatesPage() {
             <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">Browse our library of professionally designed templates to get started.</p>
           </div>
 
-          {/* Your Uploads (top-most) */}
-          {uploads.length > 0 && (
-            <div className="mb-8">
-              <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Your Uploads</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-                {uploads.map((u, idx) => (
-                  <div key={`${u.name}-${idx}`} className="group relative">
-                    <div className="h-40 w-full rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(u.url)})` }} />
-                    <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => selectAndGo(u.url, u.name)}
-                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90"
-                      >
-                        Select
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
 
           {/* Search */}
@@ -228,6 +206,23 @@ export default function TemplatesPage() {
             </button>
 
           </div>
+
+          {uploads.length > 0 && (
+            <div className="mb-8">
+              <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Your Uploads</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                {uploads.map((u, idx) => (
+                  <div key={`${u.name}-${idx}`} className="group relative">
+                    <div className="h-40 w-full rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(u.url)})` }} />
+                    <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button type="button" onClick={() => selectAndGo(u.url, u.name)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-600/90">Select</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
 
 
           {/* Category header + filters */}

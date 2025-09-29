@@ -1,18 +1,160 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+
+type TextLayer = {
+  id: string;
+  text: string;
+  x: number; // percent [0-100]
+  y: number; // percent [0-100]
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  bold: boolean;
+  italic: boolean;
+  align: "left" | "center" | "right";
+  letterSpacing: number; // px
+  lineHeight: number; // unitless multiplier
+};
 
 export default function MyDesignsPage() {
   const search = useSearchParams();
   const img = search.get("img") || "https://lh3.googleusercontent.com/aida-public/AB6AXuBndbq1uS3aC4pzCJhzgXH1RZ1ZX4LWC8wlGGQ2esOe7dLAZQC3lYJAB3xKv4VpW6iTrTYG4d8Mtzu4gu-YooH3m1C53Qsn3r7rFXrPnRrt8qYIwFpcDJNVPzpI370z_6_jYPpyPAdO_jAEfsRJre_48oyusATJNTCOQzbrVjMayHxtKiStDFotP5GtVJpwifDNSfAx6g0wUSfEDo4Z7VeVk7hkZ2FsweqRyctDJchbHcMS6KOjmU3pE5wcOX8UawMPaohSIJsPVbxT";
   const name = (search.get("name") || "design").replace(/[^a-z0-9-_]/gi, "_");
-  const exportHref = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("img", img);
-    params.set("name", name);
-    return `/export?${params.toString()}`;
-  }, [img, name]);
+  const [bgColor, setBgColor] = useState<string>("#000000");
+  const [bgImageOpacity, setBgImageOpacity] = useState<number>(1);
+
+  const [layers, setLayers] = useState<TextLayer[]>([
+    {
+      id: "layer-1",
+      text: "Başlık",
+      x: 50,
+      y: 50,
+      fontSize: 64,
+      fontFamily: "Inter, ui-sans-serif, system-ui",
+      color: "#ffffff",
+      bold: true,
+      italic: false,
+      align: "center",
+      letterSpacing: 0,
+      lineHeight: 1.2,
+    },
+  ]);
+  const [selectedId, setSelectedId] = useState<string | null>("layer-1");
+
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const dragState = useRef<{ active: boolean; offsetX: number; offsetY: number; id: string | null }>({ active: false, offsetX: 0, offsetY: 0, id: null });
+
+  const onLayerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>, id: string) => {
+    e.preventDefault();
+    setSelectedId(id);
+    const elRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    dragState.current.active = true;
+    dragState.current.id = id;
+    dragState.current.offsetX = e.clientX - elRect.left;
+    dragState.current.offsetY = e.clientY - elRect.top;
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+  }, []);
+
+  const onStagePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.current.active || !dragState.current.id) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    const layer = layers.find((l) => l.id === dragState.current.id);
+    if (!layer) return;
+    let x = e.clientX - rect.left - dragState.current.offsetX + layer.fontSize / 2;
+    let y = e.clientY - rect.top - dragState.current.offsetY + layer.fontSize / 2;
+    x = Math.max(0, Math.min(rect.width, x));
+    y = Math.max(0, Math.min(rect.height, y));
+    const nx = (x / rect.width) * 100;
+    const ny = (y / rect.height) * 100;
+    setLayers((prev) => prev.map((l) => (l.id === layer.id ? { ...l, x: nx, y: ny } : l)));
+  }, [layers]);
+
+  const onStagePointerUp = useCallback(() => {
+    dragState.current.active = false;
+    dragState.current.id = null;
+  }, []);
+
+  const addLayer = useCallback((kind: "heading" | "subheading" | "body") => {
+    const base: Omit<TextLayer, "id"> = {
+      text: kind === "heading" ? "Başlık" : kind === "subheading" ? "Alt Başlık" : "Metin",
+      x: 50,
+      y: kind === "body" ? 70 : kind === "subheading" ? 60 : 50,
+      fontSize: kind === "heading" ? 72 : kind === "subheading" ? 42 : 24,
+      fontFamily: "Inter, ui-sans-serif, system-ui",
+      color: "#ffffff",
+      bold: kind !== "body",
+      italic: false,
+      align: "center",
+      letterSpacing: 0,
+      lineHeight: 1.2,
+    };
+    const id = `layer-${Date.now()}`;
+    setLayers((prev) => [...prev, { id, ...base }]);
+    setSelectedId(id);
+  }, []);
+
+  const handleExport = useCallback(async () => {
+    // Basic export for all layers; Step 2 will add shadows/outline/advanced spacing
+    const W = 1500;
+    const H = 1000;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, W, H);
+
+    await new Promise<void>((resolve) => {
+      if (!img) return resolve();
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => {
+        try {
+          const scale = Math.max(W / image.width, H / image.height);
+          const dw = image.width * scale;
+          const dh = image.height * scale;
+          const dx = (W - dw) / 2;
+          const dy = (H - dh) / 2;
+          ctx.save();
+          ctx.globalAlpha = bgImageOpacity;
+          ctx.drawImage(image, dx, dy, dw, dh);
+          ctx.restore();
+        } catch {}
+        resolve();
+      };
+      image.onerror = () => resolve();
+      image.src = img;
+    });
+
+    ctx.textBaseline = "middle";
+
+    const drawLayer = (l: TextLayer) => {
+      const tx = (l.x / 100) * W;
+      const ty = (l.y / 100) * H;
+      ctx.fillStyle = l.color;
+      ctx.font = `${l.bold ? 700 : 400} ${l.fontSize}px ${l.fontFamily}`;
+      ctx.textAlign = l.align as CanvasTextAlign;
+      const lines = l.text.split("\n");
+      const lh = l.fontSize * (l.lineHeight || 1.2);
+      lines.forEach((line, i) => {
+        ctx.fillText(line, tx, ty + (i - (lines.length - 1) / 2) * lh);
+      });
+    };
+
+    layers.forEach(drawLayer);
+
+    const data = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = data;
+    a.download = `${name || "design"}.png`;
+    a.click();
+  }, [bgColor, img, bgImageOpacity, layers, name]);
+
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-gray-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
@@ -66,16 +208,16 @@ export default function MyDesignsPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 px-4 pb-4">
-              <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
+              <button onClick={() => addLayer("heading")} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
                 <svg className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/></svg>
-                <h2 className="font-bold">Heading</h2>
-              </div>
-              <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
-                <h2 className="font-bold">Subheading</h2>
-              </div>
-              <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
-                <h2 className="font-bold">Body</h2>
-              </div>
+                <span className="font-bold">Heading</span>
+              </button>
+              <button onClick={() => addLayer("subheading")} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
+                <span className="font-bold">Subheading</span>
+              </button>
+              <button onClick={() => addLayer("body")} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-600 dark:border-slate-700 dark:bg-slate-900">
+                <span className="font-bold">Body</span>
+              </button>
             </div>
           </div>
         </aside>
@@ -105,19 +247,131 @@ export default function MyDesignsPage() {
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V7l4-4h10l4 4v12a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v4h8"/></svg>
                 Save
               </button>
-              <a href={exportHref} className="flex h-10 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-bold text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+              <button onClick={handleExport} className="flex h-10 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-bold text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                 Export
-              </a>
+              </button>
             </div>
           </div>
 
           <div className="flex w-full flex-grow items-center justify-center p-8">
-            <div className="aspect-[3/2] w-full overflow-hidden rounded-xl shadow-lg">
-              <div className="h-full w-full bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${JSON.stringify(img)})` }} />
+            <div
+              ref={stageRef}
+              onPointerMove={onStagePointerMove}
+              onPointerUp={onStagePointerUp}
+              className="relative aspect-[3/2] w-full overflow-hidden rounded-xl shadow-lg touch-none"
+              style={{ backgroundColor: bgColor }}
+            >
+              <img src={img} crossOrigin="anonymous" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: bgImageOpacity }} />
+              {layers.map((l) => (
+                <div
+                  key={l.id}
+                  onPointerDown={(e) => onLayerPointerDown(e, l.id)}
+                  onClick={() => setSelectedId(l.id)}
+                  className={`absolute cursor-move select-none ${selectedId === l.id ? 'outline outline-2 outline-blue-500/70' : ''}`}
+                  style={{
+                    left: `${l.x}%`,
+                    top: `${l.y}%`,
+                    color: l.color,
+                    fontFamily: l.fontFamily,
+                    fontSize: `${l.fontSize}px`,
+                    fontWeight: l.bold ? 700 : 400,
+                    fontStyle: l.italic ? 'italic' : 'normal',
+                    transform: 'translate(-50%, -50%)',
+                    whiteSpace: 'pre-wrap',
+                    textAlign: l.align as any,
+                    letterSpacing: `${l.letterSpacing}px`,
+                    lineHeight: l.lineHeight,
+                    textShadow: 'none',
+                  }}
+                >
+                  {l.text}
+                </div>
+              ))}
             </div>
           </div>
         </main>
+        {/* Right properties panel */}
+        <aside className="w-80 border-l border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Design</h3>
+          <div className="mt-4 space-y-4">
+            {/* Canvas settings */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-sm font-medium mb-1">Canvas bg</label>
+                <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Image opacity</label>
+                <input type="range" min={0} max={1} step={0.05} value={bgImageOpacity} onChange={(e) => setBgImageOpacity(parseFloat(e.target.value))} className="w-full" />
+              </div>
+            </div>
+
+            {/* Selected layer settings */}
+            {selectedId ? (
+              (() => {
+                const layer = layers.find((l) => l.id === selectedId)!;
+                const update = (patch: Partial<TextLayer>) => setLayers(prev => prev.map(l => l.id === selectedId ? { ...l, ...patch } : l));
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Text</label>
+                      <textarea value={layer.text} onChange={(e) => update({ text: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Font size</label>
+                        <input type="range" min={12} max={144} value={layer.fontSize} onChange={(e) => update({ fontSize: parseInt(e.target.value) || 12 })} className="w-full" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Font family</label>
+                        <select value={layer.fontFamily} onChange={(e) => update({ fontFamily: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                          <option value="Inter, ui-sans-serif, system-ui">Inter</option>
+                          <option value="Noto Sans, ui-sans-serif, system-ui">Noto Sans</option>
+                          <option value="ui-serif, Georgia, Cambria, Times New Roman, Times, serif">Serif</option>
+                          <option value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace">Monospace</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Text color</label>
+                        <input type="color" value={layer.color} onChange={(e) => update({ color: e.target.value })} className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Align</label>
+                        <select value={layer.align} onChange={(e) => update({ align: e.target.value as any })} className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                          <option value="left">Left</option>
+                          <option value="center">Center</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Letter spacing</label>
+                        <input type="range" min={-2} max={10} step={0.5} value={layer.letterSpacing} onChange={(e) => update({ letterSpacing: parseFloat(e.target.value) })} className="w-full" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Line height</label>
+                        <input type="range" min={0.8} max={2} step={0.05} value={layer.lineHeight} onChange={(e) => update({ lineHeight: parseFloat(e.target.value) })} className="w-full" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => update({ bold: !layer.bold })} className={`rounded px-2 py-1 text-sm font-semibold ${layer.bold ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 dark:bg-slate-800'}`}>B</button>
+                      <button onClick={() => update({ italic: !layer.italic })} className={`rounded px-2 py-1 text-sm italic ${layer.italic ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 dark:bg-slate-800'}`}>I</button>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="text-sm text-slate-500">Düzenlemek için bir metin katmanı seçin.</p>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   );

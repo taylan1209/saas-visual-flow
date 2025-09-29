@@ -95,50 +95,77 @@ export default function MyDesignsPage() {
       locked: false,
     },
   ]);
-  const [selectedId, setSelectedId] = useState<string | null>("layer-1");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(["layer-1"]));
+  const selectedId = useMemo(() => (selectedIds.size === 1 ? Array.from(selectedIds)[0] : null), [selectedIds]);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const dragState = useRef<{ active: boolean; offsetX: number; offsetY: number; id: string | null }>({ active: false, offsetX: 0, offsetY: 0, id: null });
+  const dragState = useRef<{ active: boolean; startX: number; startY: number; rectW: number; rectH: number; movingIds: string[]; initial: Record<string,{x:number,y:number}> }>({ active: false, startX: 0, startY: 0, rectW: 0, rectH: 0, movingIds: [], initial: {} });
 
   const onLayerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>, id: string) => {
     e.preventDefault();
     const layer = layers.find(l => l.id === id);
     if (!layer || layer.locked === true) return; // ignore locked layers
-    setSelectedId(id);
-    const elRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    dragState.current.active = true;
-    dragState.current.id = id;
-    dragState.current.offsetX = e.clientX - elRect.left;
-    dragState.current.offsetY = e.clientY - elRect.top;
-    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-  }, [layers]);
 
-  const onStagePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragState.current.active || !dragState.current.id) return;
+    const isToggle = e.shiftKey || e.metaKey || e.ctrlKey;
+    // compute moving set immediately (setState is async)
+    let movingSet = new Set(selectedIds);
+    if (isToggle) {
+      if (movingSet.has(id)) movingSet.delete(id); else movingSet.add(id);
+    } else {
+      movingSet = new Set([id]);
+    }
+    setSelectedIds(movingSet);
+
     const stage = stageRef.current;
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
-    const layer = layers.find((l) => l.id === dragState.current.id);
-    if (!layer) return;
-    let x = e.clientX - rect.left - dragState.current.offsetX + layer.fontSize / 2;
-    let y = e.clientY - rect.top - dragState.current.offsetY + layer.fontSize / 2;
-    x = Math.max(0, Math.min(rect.width, x));
-    y = Math.max(0, Math.min(rect.height, y));
 
+    const initial: Record<string,{x:number,y:number}> = {};
+    layers.forEach(l => {
+      if (movingSet.has(l.id) && l.locked !== true) initial[l.id] = { x: l.x, y: l.y };
+    });
+
+    dragState.current.active = true;
+    dragState.current.startX = e.clientX;
+    dragState.current.startY = e.clientY;
+    dragState.current.rectW = rect.width;
+    dragState.current.rectH = rect.height;
+    dragState.current.movingIds = Object.keys(initial);
+    dragState.current.initial = initial;
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+  }, [layers, selectedIds]);
+
+  const onStagePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.current.active) return;
+    const rectW = dragState.current.rectW;
+    const rectH = dragState.current.rectH;
+    const dxPx = e.clientX - dragState.current.startX;
+    const dyPx = e.clientY - dragState.current.startY;
+    let dxPct = (dxPx / rectW) * 100;
+    let dyPct = (dyPx / rectH) * 100;
+
+    // snap to grid in percent space
     if (snapEnabled) {
-      const step = gridSpacing;
-      x = Math.round(x / step) * step;
-      y = Math.round(y / step) * step;
+      const stepPctX = (gridSpacing / rectW) * 100;
+      const stepPctY = (gridSpacing / rectH) * 100;
+      dxPct = Math.round(dxPct / stepPctX) * stepPctX;
+      dyPct = Math.round(dyPct / stepPctY) * stepPctY;
     }
 
-    const nx = (x / rect.width) * 100;
-    const ny = (y / rect.height) * 100;
-    setLayers((prev) => prev.map((l) => (l.id === layer.id ? { ...l, x: nx, y: ny } : l)));
-  }, [layers, snapEnabled, gridSpacing]);
+    const movingIds = dragState.current.movingIds;
+    const initial = dragState.current.initial;
+
+    setLayers(prev => prev.map(l => {
+      if (!movingIds.includes(l.id)) return l;
+      const nx = Math.max(0, Math.min(100, initial[l.id].x + dxPct));
+      const ny = Math.max(0, Math.min(100, initial[l.id].y + dyPct));
+      return { ...l, x: nx, y: ny };
+    }));
+  }, [snapEnabled, gridSpacing]);
 
   const onStagePointerUp = useCallback(() => {
     dragState.current.active = false;
-    dragState.current.id = null;
+    dragState.current.movingIds = [];
   }, []);
 
   const addLayer = useCallback((kind: "heading" | "subheading" | "body") => {
@@ -167,7 +194,7 @@ export default function MyDesignsPage() {
     };
     const id = `layer-${Date.now()}`;
     setLayers((prev) => [...prev, { id, ...base }]);
-    setSelectedId(id);
+    setSelectedIds(new Set([id]));
   }, []);
 
   const handleExport = useCallback(async () => {
@@ -313,8 +340,8 @@ export default function MyDesignsPage() {
               <h3 className="mb-2 px-2 text-lg font-bold text-slate-900 dark:text-white">Layers</h3>
               <div className="space-y-2">
                 {layers.map((l, idx) => (
-                  <div key={l.id} className={`flex items-center justify-between rounded-lg border px-2 py-1 text-sm ${selectedId===l.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
-                    <button onClick={() => setSelectedId(l.id)} className="flex min-w-0 flex-1 items-center gap-2 truncate text-left">
+                  <div key={l.id} className={`flex items-center justify-between rounded-lg border px-2 py-1 text-sm ${selectedIds.has(l.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
+                    <button onClick={(e) => { const isToggle = e.shiftKey || e.metaKey || e.ctrlKey; setSelectedIds(prev => { const next = new Set(prev); if (isToggle) { if (next.has(l.id)) next.delete(l.id); else next.add(l.id); } else { next.clear(); next.add(l.id); } return next; }); }} className="flex min-w-0 flex-1 items-center gap-2 truncate text-left">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: l.color }} />
                       <span className="truncate">{l.text || 'Untitled'}</span>
                     </button>
@@ -331,7 +358,7 @@ export default function MyDesignsPage() {
                       </button>
                       <button title="Move up" onClick={() => setLayers(prev=>{const i=prev.findIndex(x=>x.id===l.id); if(i<=0) return prev; const a=[...prev]; [a[i-1],a[i]]=[a[i],a[i-1]]; return a;})} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m18 15-6-6-6 6"/></svg></button>
                       <button title="Move down" onClick={() => setLayers(prev=>{const i=prev.findIndex(x=>x.id===l.id); if(i<0||i>=prev.length-1) return prev; const a=[...prev]; [a[i],a[i+1]]=[a[i+1],a[i]]; return a;})} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg></button>
-                      <button title="Delete" onClick={() => { setLayers(prev=>prev.filter(x=>x.id!==l.id)); if(selectedId===l.id) setSelectedId(null); }} className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                      <button title="Delete" onClick={() => { setLayers(prev=>prev.filter(x=>x.id!==l.id)); setSelectedIds(prev => { const next = new Set(prev); next.delete(l.id); return next; }); }} className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                     </div>
                   </div>
                 ))}
@@ -441,8 +468,8 @@ export default function MyDesignsPage() {
                 <div
                   key={l.id}
                   onPointerDown={(e) => onLayerPointerDown(e, l.id)}
-                  onClick={() => setSelectedId(l.id)}
-                  className={`absolute select-none ${l.locked ? 'cursor-not-allowed opacity-80' : 'cursor-move'} ${selectedId === l.id ? 'outline outline-2 outline-blue-500/70' : ''}`}
+                  onClick={(e)=>{ const isToggle = e.shiftKey || e.metaKey || e.ctrlKey; setSelectedIds(prev=>{ const next = new Set(prev); if (isToggle) { if (next.has(l.id)) next.delete(l.id); else next.add(l.id);} else { next.clear(); next.add(l.id);} return next; }); }}
+                  className={`absolute select-none ${l.locked ? 'cursor-not-allowed opacity-80' : 'cursor-move'} ${selectedIds.has(l.id) ? 'outline outline-2 outline-blue-500/70' : ''}`}
                   style={{
                     left: `${l.x}%`,
                     top: `${l.y}%`,
@@ -605,9 +632,61 @@ export default function MyDesignsPage() {
                   </div>
                 );
               })()
-            ) : (
-              <p className="text-sm text-slate-500">Düzenlemek için bir metin katmanı seçin.</p>
-            )}
+            ) : selectedIds.size > 1 ? (
+                (() => {
+                  const updateAll = (patch: Partial<TextLayer>) => setLayers(prev => prev.map(l => selectedIds.has(l.id) ? { ...l, ...patch } : l));
+                  return (
+                    <div className="space-y-4">
+                      <div className="rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">{selectedIds.size} katman seçili – toplu stil uygula</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Font size</label>
+                          <input type="range" min={12} max={144} onChange={(e) => updateAll({ fontSize: parseInt(e.target.value) || 12 })} className="w-full" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Font family</label>
+                          <select onChange={(e) => updateAll({ fontFamily: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                            <option value="Inter, ui-sans-serif, system-ui">Inter</option>
+                            <option value="Noto Sans, ui-sans-serif, system-ui">Noto Sans</option>
+                            <option value="ui-serif, Georgia, Cambria, Times New Roman, Times, serif">Serif</option>
+                            <option value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace">Monospace</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Text color</label>
+                          <input type="color" onChange={(e) => updateAll({ color: e.target.value })} className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Align</label>
+                          <select onChange={(e) => updateAll({ align: e.target.value as any })} className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                            <option value="left">Left</option>
+                            <option value="center">Center</option>
+                            <option value="right">Right</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Letter spacing</label>
+                          <input type="range" min={-2} max={10} step={0.5} onChange={(e) => updateAll({ letterSpacing: parseFloat(e.target.value) })} className="w-full" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Line height</label>
+                          <input type="range" min={0.8} max={2} step={0.05} onChange={(e) => updateAll({ lineHeight: parseFloat(e.target.value) })} className="w-full" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => updateAll({ bold: true })} className="rounded px-2 py-1 text-sm font-semibold bg-slate-100 dark:bg-slate-800">B</button>
+                        <button onClick={() => updateAll({ italic: true })} className="rounded px-2 py-1 text-sm italic bg-slate-100 dark:bg-slate-800">I</button>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : (
+                <p className="text-sm text-slate-500">Düzenlemek için bir metin katmanı seçin.</p>
+              )}
           </div>
         </aside>
       </div>

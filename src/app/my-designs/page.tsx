@@ -16,6 +16,15 @@ type TextLayer = {
   align: "left" | "center" | "right";
   letterSpacing: number; // px
   lineHeight: number; // unitless multiplier
+  // Effects
+  shadowEnabled: boolean;
+  shadowColor: string;
+  shadowX: number;
+  shadowY: number;
+  shadowBlur: number;
+  outlineEnabled: boolean;
+  outlineColor: string;
+  outlineWidth: number; // px
 };
 
 export default function MyDesignsPage() {
@@ -39,6 +48,14 @@ export default function MyDesignsPage() {
       align: "center",
       letterSpacing: 0,
       lineHeight: 1.2,
+      shadowEnabled: false,
+      shadowColor: "#000000",
+      shadowX: 0,
+      shadowY: 2,
+      shadowBlur: 6,
+      outlineEnabled: false,
+      outlineColor: "#000000",
+      outlineWidth: 0,
     },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>("layer-1");
@@ -91,6 +108,14 @@ export default function MyDesignsPage() {
       align: "center",
       letterSpacing: 0,
       lineHeight: 1.2,
+      shadowEnabled: false,
+      shadowColor: "#000000",
+      shadowX: 0,
+      shadowY: 2,
+      shadowBlur: 6,
+      outlineEnabled: false,
+      outlineColor: "#000000",
+      outlineWidth: 0,
     };
     const id = `layer-${Date.now()}`;
     setLayers((prev) => [...prev, { id, ...base }]);
@@ -133,17 +158,58 @@ export default function MyDesignsPage() {
 
     ctx.textBaseline = "middle";
 
+    const drawLineWithSpacing = (line: string, x: number, y: number, letterSpacing: number, fill = true, stroke = false) => {
+      // Draw per character to emulate letterSpacing
+      let totalWidth = 0;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        totalWidth += ctx.measureText(ch).width;
+        if (i < line.length - 1) totalWidth += letterSpacing;
+      }
+      let cursorX = x;
+      if (ctx.textAlign === "center") cursorX = x - totalWidth / 2;
+      else if (ctx.textAlign === "right" || ctx.textAlign === "end") cursorX = x - totalWidth;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (stroke) ctx.strokeText(ch, cursorX, y);
+        if (fill) ctx.fillText(ch, cursorX, y);
+        cursorX += ctx.measureText(ch).width + (i < line.length - 1 ? letterSpacing : 0);
+      }
+    };
+
     const drawLayer = (l: TextLayer) => {
       const tx = (l.x / 100) * W;
       const ty = (l.y / 100) * H;
-      ctx.fillStyle = l.color;
       ctx.font = `${l.bold ? 700 : 400} ${l.fontSize}px ${l.fontFamily}`;
       ctx.textAlign = l.align as CanvasTextAlign;
+      ctx.textBaseline = "middle";
+
+      // Shadow
+      ctx.shadowColor = l.shadowEnabled ? l.shadowColor : "transparent";
+      ctx.shadowBlur = l.shadowEnabled ? l.shadowBlur : 0;
+      ctx.shadowOffsetX = l.shadowEnabled ? l.shadowX : 0;
+      ctx.shadowOffsetY = l.shadowEnabled ? l.shadowY : 0;
+
       const lines = l.text.split("\n");
       const lh = l.fontSize * (l.lineHeight || 1.2);
-      lines.forEach((line, i) => {
-        ctx.fillText(line, tx, ty + (i - (lines.length - 1) / 2) * lh);
-      });
+      for (let i = 0; i < lines.length; i++) {
+        const ly = ty + (i - (lines.length - 1) / 2) * lh;
+        if (l.outlineEnabled && l.outlineWidth > 0) {
+          ctx.lineWidth = l.outlineWidth * 2; // heavier outline
+          ctx.strokeStyle = l.outlineColor;
+          ctx.fillStyle = l.color;
+          drawLineWithSpacing(lines[i], tx, ly, l.letterSpacing, false, true);
+        }
+        ctx.fillStyle = l.color;
+        drawLineWithSpacing(lines[i], tx, ly, l.letterSpacing, true, false);
+      }
+
+      // Reset shadow
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     };
 
     layers.forEach(drawLayer);
@@ -282,7 +348,7 @@ export default function MyDesignsPage() {
                     textAlign: l.align as any,
                     letterSpacing: `${l.letterSpacing}px`,
                     lineHeight: l.lineHeight,
-                    textShadow: 'none',
+                    textShadow: `${l.outlineEnabled && l.outlineWidth > 0 ? `0 ${l.outlineWidth}px 0 ${l.outlineColor}, 0 -${l.outlineWidth}px 0 ${l.outlineColor}, ${l.outlineWidth}px 0 0 ${l.outlineColor}, -${l.outlineWidth}px 0 0 ${l.outlineColor}, ${l.outlineWidth}px ${l.outlineWidth}px 0 ${l.outlineColor}, -${l.outlineWidth}px ${l.outlineWidth}px 0 ${l.outlineColor}, ${l.outlineWidth}px -${l.outlineWidth}px 0 ${l.outlineColor}, -${l.outlineWidth}px -${l.outlineWidth}px 0 ${l.outlineColor}` : ''}${(l.shadowEnabled ? (l.outlineEnabled && l.outlineWidth > 0 ? ', ' : '') + `${l.shadowX}px ${l.shadowY}px ${l.shadowBlur}px ${l.shadowColor}` : '')}`,
                   }}
                 >
                   {l.text}
@@ -363,6 +429,52 @@ export default function MyDesignsPage() {
                     <div className="flex items-center gap-2">
                       <button onClick={() => update({ bold: !layer.bold })} className={`rounded px-2 py-1 text-sm font-semibold ${layer.bold ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 dark:bg-slate-800'}`}>B</button>
                       <button onClick={() => update({ italic: !layer.italic })} className={`rounded px-2 py-1 text-sm italic ${layer.italic ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 dark:bg-slate-800'}`}>I</button>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Shadow</label>
+                        <input type="checkbox" checked={layer.shadowEnabled} onChange={(e) => update({ shadowEnabled: e.target.checked })} />
+                      </div>
+                      {layer.shadowEnabled && (
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-xs mb-1">Offset X</label>
+                            <input type="number" className="w-full rounded border bg-white px-2 py-1 text-sm dark:bg-slate-800" value={layer.shadowX} onChange={(e) => update({ shadowX: parseFloat(e.target.value) || 0 })} />
+                          </div>
+                          <div>
+                            <label className="block text-xs mb-1">Offset Y</label>
+                            <input type="number" className="w-full rounded border bg-white px-2 py-1 text-sm dark:bg-slate-800" value={layer.shadowY} onChange={(e) => update({ shadowY: parseFloat(e.target.value) || 0 })} />
+                          </div>
+                          <div>
+                            <label className="block text-xs mb-1">Blur</label>
+                            <input type="number" className="w-full rounded border bg-white px-2 py-1 text-sm dark:bg-slate-800" value={layer.shadowBlur} onChange={(e) => update({ shadowBlur: parseFloat(e.target.value) || 0 })} />
+                          </div>
+                          <div className="col-span-3">
+                            <label className="block text-xs mb-1">Color</label>
+                            <input type="color" className="h-10 w-full rounded border dark:border-slate-700" value={layer.shadowColor} onChange={(e) => update({ shadowColor: e.target.value })} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Outline</label>
+                        <input type="checkbox" checked={layer.outlineEnabled} onChange={(e) => update({ outlineEnabled: e.target.checked })} />
+                      </div>
+                      {layer.outlineEnabled && (
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-xs mb-1">Width</label>
+                            <input type="number" min={0} max={10} className="w-full rounded border bg-white px-2 py-1 text-sm dark:bg-slate-800" value={layer.outlineWidth} onChange={(e) => update({ outlineWidth: parseFloat(e.target.value) || 0 })} />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-xs mb-1">Color</label>
+                            <input type="color" className="h-10 w-full rounded border dark:border-slate-700" value={layer.outlineColor} onChange={(e) => update({ outlineColor: e.target.value })} />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -888,27 +888,37 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     if (!(shapeMode === 'fill' && shapeFillType === 'image' && shapeImageFill)) return;
     const url = shapeImageFill;
     fabric.Image.fromURL(url, (img: any) => {
-      if (!img) return;
-      const srcEl = (img.getElement ? img.getElement() : (img as any)._element) as HTMLImageElement | HTMLCanvasElement;
-      const pattern = new fabric.Pattern({
-        source: () => {
-          const c = document.createElement('canvas');
-          const w = Math.max(1, Math.round((target.width || target.radius * 2 || 200) * (target.scaleX || 1)));
-          const h = Math.max(1, Math.round((target.height || target.radius * 2 || 200) * (target.scaleY || 1)));
-          c.width = w; c.height = h;
-          const ctx = c.getContext('2d');
-          if (!ctx) return c;
-          const iw = img.width || (srcEl as any).naturalWidth || 1;
-          const ih = img.height || (srcEl as any).naturalHeight || 1;
+      try {
+        if (!img) return;
+        const element = (img.getElement ? img.getElement() : (img as any)._element) as HTMLImageElement | HTMLCanvasElement | null;
+        const c = document.createElement('canvas');
+        const getScaled = (t: any) => {
+          const w = Math.max(1, Math.round((t.getScaledWidth ? t.getScaledWidth() : (t.width || 200) * (t.scaleX || 1))));
+          const h = Math.max(1, Math.round((t.getScaledHeight ? t.getScaledHeight() : (t.height || 200) * (t.scaleY || 1))));
+          return { w, h };
+        };
+        const { w, h } = getScaled(target);
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        if (ctx && element) {
+          const iw = (img.width || (element as any).naturalWidth || 1);
+          const ih = (img.height || (element as any).naturalHeight || 1);
           const scale = Math.max(w / iw, h / ih);
           const dw = iw * scale; const dh = ih * scale;
-          ctx.drawImage(srcEl as any, (w - dw) / 2, (h - dh) / 2, dw, dh);
-          return c;
-        },
-        repeat: 'no-repeat',
-      });
-      target.set('fill', pattern);
-      fcanvasRef.current?.requestRenderAll();
+          ctx.drawImage(element as any, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        }
+        // Always return a canvas to pattern source
+        const pattern = new fabric.Pattern({
+          source: c,
+          repeat: 'no-repeat',
+        });
+        target.set('fill', pattern);
+        fcanvasRef.current?.requestRenderAll();
+      } catch {
+        // Fallback: keep solid fill if pattern fails
+        target.set('fill', shapeFill || '#ffffff');
+        fcanvasRef.current?.requestRenderAll();
+      }
     }, { crossOrigin: 'anonymous' });
   };
 

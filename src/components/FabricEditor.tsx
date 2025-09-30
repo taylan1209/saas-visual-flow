@@ -207,6 +207,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(r);
     c.setActiveObject(r);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(r);
   };
 
   const addCircle = () => {
@@ -223,6 +224,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(circ);
     c.setActiveObject(circ);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(circ);
   };
 
   const addTriangle = () => {
@@ -240,6 +242,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(triangle);
     c.setActiveObject(triangle);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(triangle);
   };
 
   const addStar = () => {
@@ -262,6 +265,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(star);
     c.setActiveObject(star);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(star);
   };
 
   const addHeart = () => {
@@ -279,6 +283,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(heart);
     c.setActiveObject(heart);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(heart);
   };
 
   const addDiamond = () => {
@@ -301,6 +306,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(diamond);
     c.setActiveObject(diamond);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(diamond);
   };
 
   const addHexagon = () => {
@@ -318,6 +324,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(hexagon);
     c.setActiveObject(hexagon);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(hexagon);
   };
 
   const addOctagon = () => {
@@ -335,6 +342,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     c.add(octagon);
     c.setActiveObject(octagon);
     c.requestRenderAll();
+    if (shapeFillType === 'image' && shapeImageFill) maybeApplyImageFill(octagon);
   };
 
   const addArrow = () => {
@@ -868,6 +876,37 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     reader.readAsDataURL(file);
   };
 
+  // Apply image fill to a shape as a pattern that covers the shape bounds
+  const maybeApplyImageFill = (target: any) => {
+    const fabric = fabricRef.current;
+    if (!fabric) return;
+    if (!(shapeMode === 'fill' && shapeFillType === 'image' && shapeImageFill)) return;
+    const url = shapeImageFill;
+    fabric.Image.fromURL(url, (img: any) => {
+      if (!img) return;
+      const srcEl = (img.getElement ? img.getElement() : (img as any)._element) as HTMLImageElement | HTMLCanvasElement;
+      const pattern = new fabric.Pattern({
+        source: () => {
+          const c = document.createElement('canvas');
+          const w = Math.max(1, Math.round((target.width || target.radius * 2 || 200) * (target.scaleX || 1)));
+          const h = Math.max(1, Math.round((target.height || target.radius * 2 || 200) * (target.scaleY || 1)));
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          if (!ctx) return c;
+          const iw = img.width || (srcEl as any).naturalWidth || 1;
+          const ih = img.height || (srcEl as any).naturalHeight || 1;
+          const scale = Math.max(w / iw, h / ih);
+          const dw = iw * scale; const dh = ih * scale;
+          ctx.drawImage(srcEl as any, (w - dw) / 2, (h - dh) / 2, dw, dh);
+          return c;
+        },
+        repeat: 'no-repeat',
+      });
+      target.set('fill', pattern);
+      fcanvasRef.current?.requestRenderAll();
+    }, { crossOrigin: 'anonymous' });
+  };
+
   // Drag & drop to replace background
   const onDragOver = (e: React.DragEvent) => {
     if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
@@ -1115,7 +1154,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                         {shapeImageFill && (
                           <div className="text-xs text-slate-400">Image uploaded ✓</div>
                         )}
-                      </div>
+              </div>
                     )}
                   </div>
                 )}

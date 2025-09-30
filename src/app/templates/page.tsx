@@ -89,7 +89,6 @@ export default function TemplatesPage() {
                 {[
                   { url: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=1200&q=80&auto=format&fit=crop', title: 'Football' },
                   { url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1200&q=80&auto=format&fit=crop', title: 'Basketball' },
-                  { url: 'https://images.unsplash.com/photo-1517647366316-0f115a8f3c56?w=1200&q=80&auto=format&fit=crop', title: 'Volleyball' },
                   { url: 'https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1200&q=80&auto=format&fit=crop', title: 'Tennis' },
                 ].map((c, i) => (
                   <a key={`${c.title}-${i}`} href={`/fabric-editor?img=${encodeURIComponent(c.url)}`} className="group block">

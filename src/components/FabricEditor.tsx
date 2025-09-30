@@ -820,6 +820,11 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     awayTextRef.current.set({ text: awayTeam });
     dateTextRef.current.set({ text: matchDate });
     stadiumTextRef.current.set({ text: stadium });
+    // Keep match info selectable but not blocking other selections
+    [homeTextRef.current, awayTextRef.current, vsTextRef.current, dateTextRef.current, stadiumTextRef.current].forEach((o: any) => {
+      if (!o) return;
+      o.set({ selectable: true, evented: true, perPixelTargetFind: true });
+    });
     c.requestRenderAll();
   };
 
@@ -906,6 +911,25 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
       fcanvasRef.current?.requestRenderAll();
     }, { crossOrigin: 'anonymous' });
   };
+
+  // Re-apply pattern after scale/resize to keep cover fit
+  useEffect(() => {
+    const c = fcanvasRef.current as any;
+    if (!c) return;
+    const onScaled = (e: any) => {
+      const obj = e?.target;
+      if (!obj) return;
+      if (shapeFillType === 'image' && shapeImageFill) {
+        maybeApplyImageFill(obj);
+      }
+    };
+    c.on('object:scaled', onScaled);
+    c.on('object:modified', onScaled);
+    return () => {
+      c.off('object:scaled', onScaled);
+      c.off('object:modified', onScaled);
+    };
+  }, [shapeFillType, shapeImageFill]);
 
   // Drag & drop to replace background
   const onDragOver = (e: React.DragEvent) => {

@@ -35,16 +35,13 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-dvh w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-200" onDrop={onDrop} onDragOver={onDragOver}>
-      <aside className="flex w-64 flex-col border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+      <aside className="flex w-80 flex-col border-r border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 p-7">
         <div className="flex items-start gap-3">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Saas Design</h1>
-            <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-blue-500/20 px-2 py-1 ring-1 ring-emerald-400/30">
-              <span className="text-[10px] font-semibold tracking-wide text-emerald-300">İrfan Taylan Çokyaman</span>
-              <span className="text-[10px] text-slate-300">•</span>
-              <span className="text-[10px] text-cyan-300">GIS Software Developer</span>
-              <span className="text-[10px] text-slate-300">•</span>
-              <span className="text-[10px] text-blue-300">Data Analyst</span>
+          <div className="w-full">
+            <div className="rounded-xl bg-slate-800/60 p-3 ring-1 ring-slate-700">
+              <div className="text-sm font-semibold tracking-wide text-emerald-300">İrfan Taylan Çokyaman</div>
+              <div className="mt-1 text-xs text-cyan-300">GIS Software Developer</div>
+              <div className="text-[11px] text-blue-300">Data Analyst</div>
             </div>
           </div>
         </div>
@@ -77,7 +74,7 @@ export default function Dashboard() {
           </ul>
         </nav>
         <div className="mt-auto">
-          <button className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-600/90">New Design</button>
+          <button className="w-full rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">New Design</button>
         </div>
       </aside>
 

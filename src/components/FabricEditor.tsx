@@ -174,7 +174,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
   const addText = () => {
     const fabric = fabricRef.current!;
     const c = fcanvasRef.current as any;
-    const text = new fabric.IText("Yeni Metin", {
+    const text = new fabric.IText("New Text", {
       left: c.getWidth() / 2 - 50,
       top: c.getHeight() / 2 - 20,
       fill: "#ffffff",
@@ -894,22 +894,22 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
   return (
     <div className="w-full flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={addText} className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm">Metin Ekle</button>
-        <button onClick={addRect} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Dikdörtgen</button>
-        <button onClick={addCircle} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Daire</button>
-        <button onClick={bringForward} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Öne Getir</button>
-        <button onClick={sendBackwards} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Geri Gönder</button>
-        <button onClick={lockUnlock} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Kilitle/Aç</button>
+        <button onClick={addText} className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm">Add Text</button>
+        <button onClick={addRect} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Rectangle</button>
+        <button onClick={addCircle} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Circle</button>
+        <button onClick={bringForward} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Bring Forward</button>
+        <button onClick={sendBackwards} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Send Backward</button>
+        <button onClick={lockUnlock} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm">Lock/Unlock</button>
         <label className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm cursor-pointer">
-          Görsel Yükle (Üstüne)
+          Upload Image (Overlay)
           <input type="file" accept="image/*" className="hidden" onChange={handleOverlayUpload} />
         </label>
         <label className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm cursor-pointer">
-          Arka Plan Yükle
+          Upload Background
           <input type="file" accept="image/*" className="hidden" onChange={handleBackgroundUpload} />
         </label>
         <div className="ml-auto" />
-        <button onClick={exportPNG} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm">PNG İndir</button>
+        <button onClick={exportPNG} className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm">Download PNG</button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4">
@@ -919,25 +919,25 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
           </div>
         </div>
         <div className="rounded border border-slate-700 p-3 space-y-3 bg-slate-900/40">
-          <h3 className="font-medium text-slate-100">Elementler</h3>
+          <h3 className="font-medium text-slate-100">Elements</h3>
           <div className="space-y-3">
             <div>
-              <div className="text-xs text-slate-300 font-medium mb-2">Şekiller</div>
+              <div className="text-xs text-slate-300 font-medium mb-2">Shapes</div>
               
               {/* Shape Categories */}
               <div className="flex items-center gap-1 text-xs mb-3">
                 <button
                   className={`px-2 py-1 rounded text-xs ${selectedShapeCategory === 'basic' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                   onClick={() => setSelectedShapeCategory('basic')}
-                >Temel</button>
+                >Basic</button>
                 <button
                   className={`px-2 py-1 rounded text-xs ${selectedShapeCategory === 'advanced' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                   onClick={() => setSelectedShapeCategory('advanced')}
-                >Gelişmiş</button>
+                >Advanced</button>
                 <button
                   className={`px-2 py-1 rounded text-xs ${selectedShapeCategory === 'icons' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                   onClick={() => setSelectedShapeCategory('icons')}
-                >İkonlar</button>
+                >Icons</button>
               </div>
 
               {/* Basic Shapes */}
@@ -946,27 +946,27 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                   <div className="grid grid-cols-3 gap-2">
                     <button onClick={addRect} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-4 bg-white rounded-sm"></div>
-                      <span>Dikdörtgen</span>
+                      <span>Rectangle</span>
                     </button>
                     <button onClick={addCircle} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white rounded-full"></div>
-                      <span>Daire</span>
+                      <span>Circle</span>
                     </button>
                     <button onClick={addTriangle} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-white"></div>
-                      <span>Üçgen</span>
+                      <span>Triangle</span>
                     </button>
                     <button onClick={addDiamond} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white transform rotate-45"></div>
-                      <span>Elmas</span>
+                      <span>Diamond</span>
                     </button>
                     <button onClick={addHexagon} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)'}}></div>
-                      <span>Altıgen</span>
+                      <span>Hexagon</span>
                     </button>
                     <button onClick={addOctagon} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'}}></div>
-                      <span>Sekizgen</span>
+                      <span>Octagon</span>
                     </button>
                   </div>
                 </div>
@@ -978,11 +978,11 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                   <div className="grid grid-cols-3 gap-2">
                     <button onClick={addStar} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'}}></div>
-                      <span>Yıldız</span>
+                      <span>Star</span>
                     </button>
                     <button onClick={addHeart} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-5 bg-white" style={{clipPath: 'path("M12,21.35l-1.45-1.32C5.4,15.36,2,12.28,2,8.5 C2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3 C19.58,3,22,5.42,22,8.5c0,3.78-3.4,6.86-8.55,11.54L12,21.35z")'}}></div>
-                      <span>Kalp</span>
+                      <span>Heart</span>
                     </button>
                     <button onClick={addPentagon} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)'}}></div>
@@ -990,17 +990,17 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                     </button>
                     <button onClick={addArrow} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-4 bg-white" style={{clipPath: 'polygon(0% 0%, 70% 0%, 70% 30%, 100% 50%, 70% 70%, 70% 100%, 0% 100%)'}}></div>
-                      <span>Ok</span>
+                      <span>Arrow</span>
                     </button>
                     <button onClick={addSpeechBubble} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-4 bg-white rounded-sm relative">
                         <div className="absolute -bottom-1 left-2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-l-transparent border-r-transparent border-t-white"></div>
                       </div>
-                      <span>Konuşma</span>
+                      <span>Speech</span>
                     </button>
                     <button onClick={addCross} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(20% 0%, 40% 0%, 40% 20%, 60% 20%, 60% 40%, 80% 40%, 80% 60%, 60% 60%, 60% 80%, 40% 80%, 40% 60%, 20% 60%, 20% 40%, 0% 40%, 0% 20%, 20% 20%)'}}></div>
-                      <span>Artı</span>
+                      <span>Cross</span>
                     </button>
                     <button onClick={addPlus} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(33% 0%, 67% 0%, 67% 33%, 100% 33%, 100% 67%, 67% 67%, 67% 100%, 33% 100%, 33% 67%, 0% 67%, 0% 33%, 33% 33%)'}}></div>
@@ -1008,15 +1008,15 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                     </button>
                     <button onClick={addMinus} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-2 bg-white rounded-sm"></div>
-                      <span>Eksi</span>
+                      <span>Minus</span>
                     </button>
                     <button onClick={addCheckmark} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-4 bg-white" style={{clipPath: 'polygon(12% 50%, 31% 69%, 87% 0%, 100% 12%, 31% 100%, 0% 62%)'}}></div>
-                      <span>Tik</span>
+                      <span>Check</span>
                     </button>
                     <button onClick={addXMark} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white" style={{clipPath: 'polygon(17% 0%, 50% 33%, 83% 0%, 100% 17%, 67% 50%, 100% 83%, 83% 100%, 50% 67%, 17% 100%, 0% 83%, 33% 50%, 0% 17%)'}}></div>
-                      <span>Çarpı</span>
+                      <span>X</span>
                     </button>
                   </div>
                 </div>
@@ -1030,19 +1030,19 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                       <div className="w-6 h-4 bg-white rounded-sm flex items-center justify-center">
                         <span className="text-black text-xs">T</span>
                       </div>
-                      <span>Dikdörtgen + Metin</span>
+                      <span>Rectangle + Text</span>
                     </button>
                     <button onClick={() => addShapeWithText('circle')} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
                         <span className="text-black text-xs">T</span>
                       </div>
-                      <span>Daire + Metin</span>
+                      <span>Circle + Text</span>
                     </button>
                     <button onClick={() => addShapeWithText('triangle')} className="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs flex flex-col items-center gap-1">
                       <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-white flex items-center justify-center">
                         <span className="text-black text-xs absolute -mt-2">T</span>
                       </div>
-                      <span>Üçgen + Metin</span>
+                      <span>Triangle + Text</span>
                     </button>
                   </div>
                 </div>
@@ -1054,11 +1054,11 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                 <button
                   className={`px-2 py-1 rounded ${shapeMode === 'fill' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                   onClick={() => setShapeMode('fill')}
-                >Dolu</button>
+                >Fill</button>
                 <button
                   className={`px-2 py-1 rounded ${shapeMode === 'stroke' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                   onClick={() => setShapeMode('stroke')}
-                >Sadece Kenar</button>
+                >Stroke</button>
               </div>
 
                 {shapeMode === 'fill' && (
@@ -1067,20 +1067,20 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                       <button
                         className={`px-2 py-1 rounded ${shapeFillType === 'solid' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                         onClick={() => setShapeFillType('solid')}
-                      >Düz</button>
+                      >Solid</button>
                       <button
                         className={`px-2 py-1 rounded ${shapeFillType === 'gradient' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                         onClick={() => setShapeFillType('gradient')}
-                      >Gradyan</button>
+                      >Gradient</button>
                       <button
                         className={`px-2 py-1 rounded ${shapeFillType === 'image' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                         onClick={() => setShapeFillType('image')}
-                      >Görsel</button>
+                      >Image</button>
                     </div>
 
                     {shapeFillType === 'solid' && (
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-300 text-xs w-16">Renk:</span>
+                        <span className="text-slate-300 text-xs w-16">Color:</span>
                         <input type="color" value={shapeFill} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShapeFill(e.target.value)} className="h-6 w-12 bg-transparent" />
                       </div>
                     )}
@@ -1091,11 +1091,11 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                           <button
                             className={`px-2 py-1 rounded text-xs ${gradientType === 'linear' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                             onClick={() => setGradientType('linear')}
-                          >Doğrusal</button>
+                          >Linear</button>
                           <button
                             className={`px-2 py-1 rounded text-xs ${gradientType === 'radial' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'}`}
                             onClick={() => setGradientType('radial')}
-                          >Dairesel</button>
+                          >Radial</button>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-slate-300 text-xs w-12">1:</span>
@@ -1113,7 +1113,7 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                           <input type="file" accept="image/*" className="hidden" onChange={handleShapeImageUpload} />
                 </label>
                         {shapeImageFill && (
-                          <div className="text-xs text-slate-400">Görsel yüklendi ✓</div>
+                          <div className="text-xs text-slate-400">Image uploaded ✓</div>
                         )}
                       </div>
                     )}
@@ -1123,11 +1123,11 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                 {shapeMode === 'stroke' && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-300 text-xs w-16">Kenar:</span>
+                      <span className="text-slate-300 text-xs w-16">Stroke:</span>
                       <input type="color" value={shapeStroke} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShapeStroke(e.target.value)} className="h-6 w-12 bg-transparent" />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-300 text-xs w-20">Kalınlık:</span>
+                      <span className="text-slate-300 text-xs w-20">Width:</span>
                       <input type="range" min={1} max={20} step={1} value={shapeStrokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShapeStrokeWidth(parseInt(e.target.value,10))} className="flex-1" />
                       <span className="w-6 text-right text-slate-300 text-xs">{shapeStrokeWidth}</span>
                     </div>
@@ -1137,10 +1137,10 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
             </div>
 
             <div className="pt-3 border-t border-slate-800">
-              <div className="text-xs text-slate-300 font-medium mb-1">Görseller</div>
+              <div className="text-xs text-slate-300 font-medium mb-1">Images</div>
               <div className="flex items-center gap-2">
                 <label className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm cursor-pointer">
-                  Dosyadan Ekle
+                  From File
                   <input type="file" accept="image/*" className="hidden" onChange={handleOverlayUpload} />
                 </label>
                 <input
@@ -1153,69 +1153,69 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                 <button
                   className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm"
                   onClick={()=>{ if(imageURL.trim()) { addImageFromURL(imageURL.trim()); setImageURL(''); } }}
-                >Ekle</button>
+                >Add</button>
               </div>
             </div>
           </div>
 
           <hr className="my-3 border-slate-800" />
 
-          <h3 className="font-medium text-slate-100">Maç Bilgileri</h3>
+          <h3 className="font-medium text-slate-100">Match Info</h3>
           <div className="space-y-2 text-xs">
             <label className="flex items-center gap-2">
-              <span className="w-24 text-slate-300">Ev Sahibi</span>
+              <span className="w-24 text-slate-300">Home</span>
               <input value={homeTeam} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setHomeTeam(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
             </label>
             <label className="flex items-center gap-2">
-              <span className="w-24 text-slate-300">Deplasman</span>
+              <span className="w-24 text-slate-300">Away</span>
               <input value={awayTeam} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setAwayTeam(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
             </label>
             <label className="flex items-center gap-2">
-              <span className="w-24 text-slate-300">Tarih</span>
+              <span className="w-24 text-slate-300">Date</span>
               <input value={matchDate} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setMatchDate(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
             </label>
             <label className="flex items-center gap-2">
-              <span className="w-24 text-slate-300">Stadyum</span>
+              <span className="w-24 text-slate-300">Stadium</span>
               <input value={stadium} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setStadium(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
             </label>
             <div className="flex items-center gap-2">
               <label className="px-2 py-1.5 rounded bg-slate-700 text-white text-xs cursor-pointer">
-                Ev Logo
+                Home Logo
                 <input type="file" accept="image/*" className="hidden" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ const f=e.target.files?.[0]; if(f) uploadTeamLogo('home', f); }} />
               </label>
               <label className="px-2 py-1.5 rounded bg-slate-700 text-white text-xs cursor-pointer">
-                Dep Logo
+                Away Logo
                 <input type="file" accept="image/*" className="hidden" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ const f=e.target.files?.[0]; if(f) uploadTeamLogo('away', f); }} />
               </label>
-              <button className="ml-auto px-2 py-1.5 rounded bg-emerald-600 text-white text-xs" onClick={ensureMatchTexts}>Sahaya Yerleştir</button>
+              <button className="ml-auto px-2 py-1.5 rounded bg-emerald-600 text-white text-xs" onClick={ensureMatchTexts}>Place on Canvas</button>
             </div>
           </div>
 
           <hr className="my-3 border-slate-800" />
 
-          <h3 className="font-medium text-slate-100">Arka Plan Filtreleri</h3>
-          <div className="text-[11px] text-slate-400">Sürükle-bırak ile arka planı değiştirebilirsiniz. Not: Görselin içindeki yazılar resmin parçasıdır; doğrudan düzenlenemez. Yeni metin ekleyip üstüne yerleştirin veya şekillerle arka planı kapatın.</div>
+          <h3 className="font-medium text-slate-100">Background Filters</h3>
+          <div className="text-[11px] text-slate-400">Drag & drop to replace background. Tip: Text embedded in the image cannot be edited; add new text layers or cover with shapes.</div>
           <div className="space-y-2">
-            <label className="block text-xs text-slate-300">Parlaklık: {brightness.toFixed(2)}</label>
+            <label className="block text-xs text-slate-300">Brightness: {brightness.toFixed(2)}</label>
             <input type="range" min={-1} max={1} step={0.01} value={brightness} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBrightness(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
-            <label className="block text-xs text-slate-300">Kontrast: {contrast.toFixed(2)}</label>
+            <label className="block text-xs text-slate-300">Contrast: {contrast.toFixed(2)}</label>
             <input type="range" min={-1} max={1} step={0.01} value={contrast} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setContrast(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
-            <label className="block text-xs text-slate-300">Doygunluk: {saturation.toFixed(2)}</label>
+            <label className="block text-xs text-slate-300">Saturation: {saturation.toFixed(2)}</label>
             <input type="range" min={-1} max={1} step={0.01} value={saturation} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setSaturation(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
-            <label className="block text-xs text-slate-300">Bulanıklık: {blur.toFixed(2)}</label>
+            <label className="block text-xs text-slate-300">Blur: {blur.toFixed(2)}</label>
             <input type="range" min={0} max={1} step={0.01} value={blur} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBlur(parseFloat(e.target.value))} />
           </div>
           <div className="space-y-2">
-            <label className="block text-xs text-slate-300">Arka Plan Opaklık: {opacity.toFixed(2)}</label>
+            <label className="block text-xs text-slate-300">Background Opacity: {opacity.toFixed(2)}</label>
             <input type="range" min={0} max={1} step={0.01} value={opacity} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setOpacity(parseFloat(e.target.value))} />
           </div>
-          <p className="text-[11px] text-slate-400">İpucu: Seçili nesneleri Delete ile silebilirsiniz. ⌘/Ctrl+G ile gruplama, ⌘/Ctrl+F öne, ⌘/Ctrl+B arkaya gönderir.</p>
+          <p className="text-[11px] text-slate-400">Tip: Press Delete to remove selected objects. ⌘/Ctrl+G to group, ⌘/Ctrl+F front, ⌘/Ctrl+B back.</p>
         </div>
       </div>
     </div>

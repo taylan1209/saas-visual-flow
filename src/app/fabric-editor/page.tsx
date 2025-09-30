@@ -63,7 +63,7 @@ export default function FabricEditorPage() {
           <h2 className="text-sm font-semibold tracking-wide">Templates</h2>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">Sports</span>
         </div>
-        <p className="text-[11px] text-slate-400 leading-relaxed">Spor müsabaka posterleri: takım logonuzu, maç tarihini ve saati, stadyumu ve ligi hızlıca düzenleyin.</p>
+        <p className="text-[11px] text-slate-400 leading-relaxed">Sports match posters: quickly edit team logos, date & time, stadium and league.</p>
         <div className="grid grid-cols-1 gap-3">
           {templates.map(t => (
             <button
@@ -81,20 +81,18 @@ export default function FabricEditorPage() {
             </button>
           ))}
         </div>
-        <div className="pt-2 text-[11px] text-slate-500">
-          Az sayıda ama etkili şablon: futbol, basketbol, voleybol ve tenis.
-        </div>
+        <div className="pt-2 text-[11px] text-slate-500">A focused set of templates: football, basketball, volleyball and tennis.</div>
       </aside>
 
       {/* Main - Editor */}
       <main className="p-3 md:p-5 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <h1 className="text-base md:text-lg font-semibold">Spor Poster Editörü</h1>
+            <h1 className="text-base md:text-lg font-semibold">Sports Poster Editor</h1>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">Beta</span>
           </div>
           <div className="flex items-center gap-2">
-            <a className="text-xs text-blue-400 underline" href="/app/my-designs">Tasarımlarım</a>
+            <a className="text-xs text-blue-400 underline" href="/app/my-designs">My Designs</a>
           </div>
         </div>
 
@@ -102,9 +100,7 @@ export default function FabricEditorPage() {
           <FabricEditor imageUrl={selected.imageUrl} width={selected.width} height={selected.height} />
         </div>
 
-        <div className="text-[11px] text-slate-400">
-          Şablona tıklayınca arka plan değişir. Takım isimlerini, maç tarihini ve ek öğeleri sağ panelden ekleyip düzenleyin.
-        </div>
+        <div className="text-[11px] text-slate-400">Click a template to change the background. Edit team names, match date and extras from the right panel.</div>
       </main>
     </div>
   );

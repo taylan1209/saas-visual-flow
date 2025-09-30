@@ -36,8 +36,17 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-dvh w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-200" onDrop={onDrop} onDragOver={onDragOver}>
       <aside className="flex w-64 flex-col border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Saas Design</h1>
+        <div className="flex items-start gap-3">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Saas Design</h1>
+            <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-blue-500/20 px-2 py-1 ring-1 ring-emerald-400/30">
+              <span className="text-[10px] font-semibold tracking-wide text-emerald-300">İrfan Taylan Çokyaman</span>
+              <span className="text-[10px] text-slate-300">•</span>
+              <span className="text-[10px] text-cyan-300">GIS Software Developer</span>
+              <span className="text-[10px] text-slate-300">•</span>
+              <span className="text-[10px] text-blue-300">Data Analyst</span>
+            </div>
+          </div>
         </div>
         <nav className="mt-8 flex flex-1 flex-col">
           <ul className="flex flex-col gap-2">

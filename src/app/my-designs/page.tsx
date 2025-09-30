@@ -27,6 +27,11 @@ type TextLayer = {
   outlineColor: string;
   outlineWidth: number; // px
 
+  // Shape flags & transforms
+  isShape?: boolean; // if true, can be non-uniformly scaled via scaleX/scaleY
+  scaleX?: number; // default 1
+  scaleY?: number; // default 1
+
   // Layer controls
   visible: boolean;
   locked: boolean;
@@ -108,6 +113,9 @@ function MyDesignsPageInner() {
       outlineEnabled: false,
       outlineColor: "#000000",
       outlineWidth: 0,
+      isShape: false,
+      scaleX: 1,
+      scaleY: 1,
       visible: true,
       locked: false,
     },
@@ -119,7 +127,7 @@ function MyDesignsPageInner() {
   const dragState = useRef<{ active: boolean; startX: number; startY: number; rectW: number; rectH: number; movingIds: string[]; initial: Record<string,{x:number,y:number}> }>({ active: false, startX: 0, startY: 0, rectW: 0, rectH: 0, movingIds: [], initial: {} });
 
   // Resize state & measurements
-  const resizeState = useRef<{ active: boolean; id: string | null; handle: 'n'|'s'|'e'|'w'|'ne'|'nw'|'se'|'sw'|null; startX: number; startY: number; startW: number; startH: number; startFont: number }>({ active: false, id: null, handle: null, startX: 0, startY: 0, startW: 0, startH: 0, startFont: 0 });
+  const resizeState = useRef<{ active: boolean; id: string | null; handle: 'n'|'s'|'e'|'w'|'ne'|'nw'|'se'|'sw'|null; startX: number; startY: number; startW: number; startH: number; startFont: number; startScaleX: number; startScaleY: number }>({ active: false, id: null, handle: null, startX: 0, startY: 0, startW: 0, startH: 0, startFont: 0, startScaleX: 1, startScaleY: 1 });
   const layerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [layerBoxes, setLayerBoxes] = useState<Record<string, { left: number; top: number; width: number; height: number }>>({});
 
@@ -168,12 +176,32 @@ function MyDesignsPageInner() {
       const dx = e.clientX - resizeState.current.startX;
       const dy = e.clientY - resizeState.current.startY;
       const handle = resizeState.current.handle;
-      // Determine scale based on handle direction. Keep uniform scale from center.
-      const scaleX = (resizeState.current.startW + (handle === 'e' || handle === 'ne' || handle === 'se' ? dx : handle === 'w' || handle === 'nw' || handle === 'sw' ? -dx : 0)) / Math.max(1, resizeState.current.startW);
-      const scaleY = (resizeState.current.startH + (handle === 's' || handle === 'se' || handle === 'sw' ? dy : handle === 'n' || handle === 'ne' || handle === 'nw' ? -dy : 0)) / Math.max(1, resizeState.current.startH);
-      const scale = handle === 'e' || handle === 'w' ? scaleX : handle === 'n' || handle === 's' ? scaleY : Math.max(scaleX, scaleY);
-      const newFont = Math.max(4, Math.round(resizeState.current.startFont * scale));
-      setLayers(prev => prev.map(l => l.id === id ? { ...l, fontSize: newFont } : l));
+      const layer = layers.find(l=>l.id===id);
+      if (!layer) return;
+      // Determine scale deltas by handle direction
+      const rawScaleX = (resizeState.current.startW + (handle === 'e' || handle === 'ne' || handle === 'se' ? dx : handle === 'w' || handle === 'nw' || handle === 'sw' ? -dx : 0)) / Math.max(1, resizeState.current.startW);
+      const rawScaleY = (resizeState.current.startH + (handle === 's' || handle === 'se' || handle === 'sw' ? dy : handle === 'n' || handle === 'ne' || handle === 'nw' ? -dy : 0)) / Math.max(1, resizeState.current.startH);
+
+      if (layer.isShape) {
+        // Per-axis scaling for shapes
+        let sx = resizeState.current.startScaleX;
+        let sy = resizeState.current.startScaleY;
+        if (handle === 'e' || handle === 'w') {
+          sx = Math.max(0.05, resizeState.current.startScaleX * rawScaleX);
+        } else if (handle === 'n' || handle === 's') {
+          sy = Math.max(0.05, resizeState.current.startScaleY * rawScaleY);
+        } else {
+          // corners: scale both, use independent axes
+          sx = Math.max(0.05, resizeState.current.startScaleX * rawScaleX);
+          sy = Math.max(0.05, resizeState.current.startScaleY * rawScaleY);
+        }
+        setLayers(prev => prev.map(l => l.id === id ? { ...l, scaleX: sx, scaleY: sy } : l));
+      } else {
+        // Non-shape text keeps uniform fontSize scaling
+        const uni = (handle === 'e' || handle === 'w') ? rawScaleX : (handle === 'n' || handle === 's') ? rawScaleY : Math.max(rawScaleX, rawScaleY);
+        const newFont = Math.max(4, Math.round(resizeState.current.startFont * uni));
+        setLayers(prev => prev.map(l => l.id === id ? { ...l, fontSize: newFont } : l));
+      }
       return;
     }
 
@@ -339,7 +367,7 @@ function MyDesignsPageInner() {
       y: 55,
       fontSize: 220,
       fontFamily: 'Inter, ui-sans-serif, system-ui',
-      color: '#ffffff',
+      color: 'transparent', // border-only by default (serbest kenarlı)
       bold: false,
       italic: false,
       align: 'center',
@@ -350,9 +378,12 @@ function MyDesignsPageInner() {
       shadowX: 0,
       shadowY: 2,
       shadowBlur: 6,
-      outlineEnabled: false,
-      outlineColor: '#000000',
-      outlineWidth: 0,
+      outlineEnabled: true,
+      outlineColor: '#ffffff',
+      outlineWidth: 6,
+      isShape: true,
+      scaleX: 1,
+      scaleY: 1,
       visible: true,
       locked: false,
     };
@@ -791,7 +822,8 @@ function MyDesignsPageInner() {
                     fontSize: `${l.fontSize}px`,
                     fontWeight: l.bold ? 700 : 400,
                     fontStyle: l.italic ? 'italic' : 'normal',
-                    transform: 'translate(-50%, -50%)',
+                    transform: `translate(-50%, -50%) scale(${l.scaleX ?? 1}, ${l.scaleY ?? 1})`,
+                    transformOrigin: 'center',
                     whiteSpace: 'pre-wrap',
                     textAlign: l.align as any,
                     letterSpacing: `${l.letterSpacing}px`,
@@ -821,6 +853,8 @@ function MyDesignsPageInner() {
                       resizeState.current.startW = box.width;
                       resizeState.current.startH = box.height;
                       resizeState.current.startFont = layer.fontSize;
+                      resizeState.current.startScaleX = layer.scaleX ?? 1;
+                      resizeState.current.startScaleY = layer.scaleY ?? 1;
                       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
                     }}
                     className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-white shadow ring-1 ring-blue-600"
@@ -908,8 +942,14 @@ function MyDesignsPageInner() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Text color</label>
-                        <input type="color" value={layer.color} onChange={(e) => update({ color: e.target.value })} className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700" />
+                        <label className="block text-sm font-medium mb-1">Text/Shape fill</label>
+                        <input type="color" value={layer.color === 'transparent' ? '#ffffff' : layer.color} onChange={(e) => update({ color: e.target.value })} className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700" />
+                        {layer.isShape && (
+                          <label className="mt-2 flex items-center gap-2 text-xs">
+                            <input type="checkbox" checked={layer.color === 'transparent'} onChange={(e)=> update({ color: e.target.checked ? 'transparent' : '#ffffff', outlineEnabled: e.target.checked ? true : layer.outlineEnabled })} />
+                            <span>Dolgusuz (Sadece Kenar)</span>
+                          </label>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Align</label>

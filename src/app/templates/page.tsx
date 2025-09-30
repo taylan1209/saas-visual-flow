@@ -31,8 +31,20 @@ export default function TemplatesPage() {
   const onDragLeave = useCallback(() => setIsDragging(false), []);
 
   const goSelect = () => {
-    if (!imageUrl.trim()) return;
-    router.push(`/fabric-editor?img=${encodeURIComponent(imageUrl.trim())}`);
+    const url = imageUrl.trim();
+    if (!url) return;
+    try {
+      // If data URL, store in sessionStorage to avoid extremely long URLs
+      if (typeof window !== 'undefined' && url.startsWith('data:')) {
+        const key = `upload-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+        window.sessionStorage.setItem(key, url);
+        router.push(`/fabric-editor?uploadKey=${encodeURIComponent(key)}`);
+      } else {
+        router.push(`/fabric-editor?img=${encodeURIComponent(url)}`);
+      }
+    } catch {
+      router.push(`/fabric-editor?img=${encodeURIComponent(url)}`);
+    }
   };
 
   return (

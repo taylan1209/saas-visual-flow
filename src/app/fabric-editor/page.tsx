@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const FabricEditor = dynamic(() => import("@/components/FabricEditor"), { ssr: false });
@@ -54,6 +54,23 @@ export default function FabricEditorPage() {
   ], []);
 
   const [selected, setSelected] = useState<Template>(templates[0]);
+
+  // If coming from /templates with an uploadKey, resolve it to a data URL
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
+      const uploadKey = params.get('uploadKey');
+      const directImg = params.get('img');
+      if (uploadKey && typeof window !== 'undefined') {
+        const dataUrl = window.sessionStorage.getItem(uploadKey);
+        if (dataUrl) {
+          setSelected((prev) => ({ ...prev, imageUrl: dataUrl }));
+        }
+      } else if (directImg) {
+        setSelected((prev) => ({ ...prev, imageUrl: directImg }));
+      }
+    } catch {}
+  }, []);
 
   return (
     <div className="min-h-dvh grid grid-cols-1 md:grid-cols-[280px_1fr] bg-slate-950 text-slate-100">

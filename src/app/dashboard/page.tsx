@@ -73,9 +73,7 @@ export default function Dashboard() {
             </li>
           </ul>
         </nav>
-        <div className="mt-auto">
-          <button className="w-full rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">New Design</button>
-        </div>
+        <div className="mt-auto" />
       </aside>
 
       <main className="flex-1 overflow-y-auto">

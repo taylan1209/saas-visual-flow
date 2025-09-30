@@ -34,15 +34,6 @@ export default function FabricEditorPage() {
       height: 800,
     },
     {
-      id: "volleyball-cup",
-      title: "Cup Final",
-      subtitle: "Volleyball • Poster",
-      imageUrl:
-        "https://images.unsplash.com/photo-1517647366316-0f115a8f3c56?w=1600&q=80&auto=format&fit=crop",
-      width: 1200,
-      height: 800,
-    },
-    {
       id: "tennis-open",
       title: "Open Finals",
       subtitle: "Tennis • Poster",

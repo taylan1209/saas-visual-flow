@@ -1,6 +1,6 @@
 export default function Dashboard() {
   return (
-    <div className="flex h-screen w-full bg-gray-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+    <div className="flex min-h-dvh w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-200">
       <aside className="flex w-64 flex-col border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Saas Design</h1>
@@ -49,40 +49,50 @@ export default function Dashboard() {
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">
           <header className="mb-8">
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">Welcome back, Alex! Here's an overview of your recent activity and key metrics.</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-white">Dashboard</h1>
+                <p className="mt-2 text-slate-400">Welcome back! Here is a quick overview and your latest sports posters.</p>
+              </div>
+              <a href="/templates" className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">Create new</a>
+            </div>
           </header>
 
           <section>
-            <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">Recent Designs</h2>
+            <h2 className="mb-4 text-xl font-bold text-white">Recent Designs</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {[{
-                url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDSLQgsGBNJMSzo0HtYnGPk7pqx-RfzITE0VIXMEUedYpAKHGCwDORfS911WWtJleOZUYPUrv-FJn77Uot-D7Pt29IGzYsdWamzj0qbfKkK5ECaPW1VxO_es37gq4_CmVhofOBIiUsAyYuGy6sqQuxHoPhRDvS8WH9dWBC9QWLkwwYQJ95u9u2egKb5dsvZSQNElhohXR2YDooO3spBx_S91e0waLjuBLv79P8DixO8tZukNRa0mq-lQgl70CkvzbjipRW0mSHAopc7',
-                title: 'Social Media Post - Campaign Launch',
-                date: 'Created 2 days ago',
-              }, {
-                url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDf3n9RKKgMMuhjFXDKhu0B77jr9KHx2_pun0yfcEAPPlTOvg83UupTZkeu_mgaTwJdEkjF2nxZ7RGZS07BsVlfCvDGssVnJisn7TbeLNHqNK1WQBXnXVyRIQ105Sjyj3AiJCMFpwRyvWu77Y-7uYcq4HBND0zA_g30cKUKX7elZSJzvdrGmID5em1bb1BFgTFBVqlfZsx0hf5fDyYdXj9Bkzpvjd_CVb9F5byF0SeupMOlIaEfKwDPE00sRJpa7K3ja1BSHeg5VznC',
-                title: 'Instagram Story - Product Feature',
-                date: 'Created 5 days ago',
-              }, {
-                url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEXCjibzOaKpQkqC9gDkZ6aHYjtOlxAW-hKBgFoQ_2xoXYW8RWW8uKufakaaqZRQ7pjKVbo281lGzGrCGCSwnN9H0zJ3zRjCM-ryB6ruFdFcba-4zEQ6je7ZlxIlW3ld98uJK1z21dFOhE9mSY10C08XxgyRt9M1R4g2p_odqGBfwCl-DuaL1QplyzSu-0RKA99hewTnn4UBXyyHrApHyadJ-oVR63nikjc9RFpa3_LuGJPNto6LdLrBn9ltoz2vueYYtkYQSG9Snv',
-                title: 'Twitter Header - Event Announcement',
-                date: 'Created 1 week ago',
-              }, {
-                url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAR5l4o6w2z_M88kGbzpVrz66Q3ChajCKuCzQYRAFjhCPKs0vAaB1tOi2_oq58-AMjkBYpUaUNX1US3ZyEFgE6zb_45_oTfk5wKAuapwN7wlL36gdp0YcrdsEdEa6Bwr-56P9JuA2X66Ij3lRs7v6e6l0HaOjxT23afz-ZaIZ7l5_GMHYnYNbZQcvY7HIU2S3R4XxFHiPxUgU_C8I48e9N8_Qf73usUr1bwAR8KWjyaEijb6Jy3qq9T0g73NgRmS-MqKdViEHdkMXMp',
-                title: 'Facebook Ad - Special Offer',
-                date: 'Created 2 weeks ago',
-              }].map((card) => (
-                <div className="group" key={card.title}>
-                  <div className="mb-3 w-full overflow-hidden rounded-lg">
+              {[
+                {
+                  url: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=1200&q=80&auto=format&fit=crop',
+                  title: 'Football Match Poster',
+                  date: '2 days ago',
+                },
+                {
+                  url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1200&q=80&auto=format&fit=crop',
+                  title: 'Basketball Derby Night',
+                  date: '5 days ago',
+                },
+                {
+                  url: 'https://images.unsplash.com/photo-1517647366316-0f115a8f3c56?w=1200&q=80&auto=format&fit=crop',
+                  title: 'Volleyball Cup Final',
+                  date: '1 week ago',
+                },
+                {
+                  url: 'https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1200&q=80&auto=format&fit=crop',
+                  title: 'Tennis Open Finals',
+                  date: '2 weeks ago',
+                },
+              ].map((card) => (
+                <a className="group block" key={card.title} href={`/fabric-editor?img=${encodeURIComponent(card.url)}`}>
+                  <div className="mb-3 w-full overflow-hidden rounded-xl ring-1 ring-slate-800/70 bg-slate-900">
                     <div
                       className="h-48 w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
                       style={{ backgroundImage: `url("${card.url}")` }}
                     />
                   </div>
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">{card.title}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{card.date}</p>
-                </div>
+                  <h3 className="font-semibold text-white">{card.title}</h3>
+                  <p className="text-sm text-slate-400">{card.date}</p>
+                </a>
               ))}
             </div>
           </section>

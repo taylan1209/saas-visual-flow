@@ -19,6 +19,15 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
   const fcanvasRef = useRef<any>(null);
   const bgImageRef = useRef<any>(null);
 
+  // Match info refs
+  const homeTextRef = useRef<any>(null);
+  const awayTextRef = useRef<any>(null);
+  const vsTextRef = useRef<any>(null);
+  const dateTextRef = useRef<any>(null);
+  const stadiumTextRef = useRef<any>(null);
+  const homeLogoRef = useRef<any>(null);
+  const awayLogoRef = useRef<any>(null);
+
   // Filters state
   const [brightness, setBrightness] = useState(0); // -1..1
   const [contrast, setContrast] = useState(0); // -1..1
@@ -37,6 +46,12 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
   const [gradientColor2, setGradientColor2] = useState<string>('#0000ff');
   const [shapeImageFill, setShapeImageFill] = useState<string>('');
   const [selectedShapeCategory, setSelectedShapeCategory] = useState<string>('basic');
+
+  // Match info state
+  const [homeTeam, setHomeTeam] = useState<string>('Home FC');
+  const [awayTeam, setAwayTeam] = useState<string>('Away FC');
+  const [matchDate, setMatchDate] = useState<string>('22 SEPTEMBER 2030');
+  const [stadium, setStadium] = useState<string>('BORCELLE STADIUM');
 
   // Elements: image by URL
   const [imageURL, setImageURL] = useState<string>('');
@@ -709,6 +724,131 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
     }, { crossOrigin: "anonymous" });
   };
 
+  // Match info helpers
+  const ensureMatchTexts = () => {
+    const fabric = fabricRef.current!;
+    const c = fcanvasRef.current as any;
+    const centerX = c.getWidth() / 2;
+
+    if (!homeTextRef.current) {
+      homeTextRef.current = new fabric.IText(homeTeam, {
+        left: centerX - 260,
+        top: c.getHeight() / 2 + 80,
+        fill: '#ffffff',
+        fontWeight: 700,
+        fontFamily: 'Inter, ui-sans-serif, system-ui',
+        fontSize: 28,
+        textAlign: 'center',
+        originX: 'center',
+      });
+      c.add(homeTextRef.current);
+    }
+
+    if (!awayTextRef.current) {
+      awayTextRef.current = new fabric.IText(awayTeam, {
+        left: centerX + 260,
+        top: c.getHeight() / 2 + 80,
+        fill: '#ffffff',
+        fontWeight: 700,
+        fontFamily: 'Inter, ui-sans-serif, system-ui',
+        fontSize: 28,
+        textAlign: 'center',
+        originX: 'center',
+      });
+      c.add(awayTextRef.current);
+    }
+
+    if (!vsTextRef.current) {
+      vsTextRef.current = new fabric.IText('VS', {
+        left: centerX,
+        top: c.getHeight() / 2 + 60,
+        fill: '#ffffff',
+        fontWeight: 800,
+        fontFamily: 'Inter, ui-sans-serif, system-ui',
+        fontSize: 64,
+        textAlign: 'center',
+        originX: 'center',
+      });
+      c.add(vsTextRef.current);
+    }
+
+    if (!dateTextRef.current) {
+      dateTextRef.current = new fabric.IText(matchDate, {
+        left: centerX,
+        top: c.getHeight() / 2 + 150,
+        fill: '#ffffff',
+        fontWeight: 800,
+        fontFamily: 'Inter, ui-sans-serif, system-ui',
+        fontSize: 32,
+        textAlign: 'center',
+        originX: 'center',
+        backgroundColor: 'rgba(16,185,129,0.8)',
+        padding: 8,
+      });
+      c.add(dateTextRef.current);
+    }
+
+    if (!stadiumTextRef.current) {
+      stadiumTextRef.current = new fabric.IText(stadium, {
+        left: centerX,
+        top: c.getHeight() / 2 + 210,
+        fill: '#ffffff',
+        fontWeight: 600,
+        fontFamily: 'Inter, ui-sans-serif, system-ui',
+        fontSize: 20,
+        textAlign: 'center',
+        originX: 'center',
+      });
+      c.add(stadiumTextRef.current);
+    }
+
+    c.requestRenderAll();
+  };
+
+  const updateMatchTexts = () => {
+    const c = fcanvasRef.current as any;
+    ensureMatchTexts();
+    homeTextRef.current.set({ text: homeTeam });
+    awayTextRef.current.set({ text: awayTeam });
+    dateTextRef.current.set({ text: matchDate });
+    stadiumTextRef.current.set({ text: stadium });
+    c.requestRenderAll();
+  };
+
+  const uploadTeamLogo = (side: 'home' | 'away', file: File) => {
+    const fabric = fabricRef.current!;
+    const c = fcanvasRef.current as any;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      fabric.Image.fromURL(url, (img: any) => {
+        if (!img) return;
+        const centerX = c.getWidth() / 2;
+        const base = {
+          left: side === 'home' ? centerX - 260 : centerX + 260,
+          top: c.getHeight() / 2 - 20,
+          selectable: true,
+          evented: true,
+          centeredScaling: false,
+          lockUniScaling: false,
+        } as const;
+        const scale = Math.min(120 / (img.width || 1), 120 / (img.height || 1));
+        img.set(base);
+        if (isFinite(scale) && scale > 0) img.scale(scale);
+        if (side === 'home') {
+          if (homeLogoRef.current) c.remove(homeLogoRef.current);
+          homeLogoRef.current = img;
+        } else {
+          if (awayLogoRef.current) c.remove(awayLogoRef.current);
+          awayLogoRef.current = img;
+        }
+        c.add(img);
+        c.requestRenderAll();
+      }, { crossOrigin: 'anonymous' });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1015,6 +1155,39 @@ export default function FabricEditor({ imageUrl, width = 1200, height = 800, bac
                   onClick={()=>{ if(imageURL.trim()) { addImageFromURL(imageURL.trim()); setImageURL(''); } }}
                 >Ekle</button>
               </div>
+            </div>
+          </div>
+
+          <hr className="my-3 border-slate-800" />
+
+          <h3 className="font-medium text-slate-100">Maç Bilgileri</h3>
+          <div className="space-y-2 text-xs">
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-slate-300">Ev Sahibi</span>
+              <input value={homeTeam} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setHomeTeam(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
+            </label>
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-slate-300">Deplasman</span>
+              <input value={awayTeam} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setAwayTeam(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
+            </label>
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-slate-300">Tarih</span>
+              <input value={matchDate} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setMatchDate(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
+            </label>
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-slate-300">Stadyum</span>
+              <input value={stadium} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ setStadium(e.target.value); updateMatchTexts(); }} className="flex-1 rounded bg-slate-800/70 border border-slate-700 px-2 py-1.5 text-xs text-slate-100" />
+            </label>
+            <div className="flex items-center gap-2">
+              <label className="px-2 py-1.5 rounded bg-slate-700 text-white text-xs cursor-pointer">
+                Ev Logo
+                <input type="file" accept="image/*" className="hidden" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ const f=e.target.files?.[0]; if(f) uploadTeamLogo('home', f); }} />
+              </label>
+              <label className="px-2 py-1.5 rounded bg-slate-700 text-white text-xs cursor-pointer">
+                Dep Logo
+                <input type="file" accept="image/*" className="hidden" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{ const f=e.target.files?.[0]; if(f) uploadTeamLogo('away', f); }} />
+              </label>
+              <button className="ml-auto px-2 py-1.5 rounded bg-emerald-600 text-white text-xs" onClick={ensureMatchTexts}>Sahaya Yerleştir</button>
             </div>
           </div>
 
